@@ -17,36 +17,31 @@
 //    Read AUTHORS.txt, LICENSE.txt and COPYRIGHT.txt for more details.
 //=========================================================================
 
-using namespace std;
+#pragma once
 
-#include <stack>
-#include <list>
-#include <set>
-#include <iterator>
-#include <vector>
-#include <string>
-#include <map>
-#include <algorithm>
-#include <ctype.h>
-#include <pthread.h>
-#include "allegro5/allegro.h"
-#include "allegro5/allegro_image.h"
-#if defined(_WIN32) || defined(WIN32)
-#include <fbxsdk.h>
-#include <fbxsdk/fileio/fbxiosettings.h>
-#endif
-
-// Common Headers only should be pre-compiled
-#include "half/half.h"
-#include "sha1/sha1.h"
-#include "tinyxml/tinyxml.h"
-#include "MathGens.h"
-#include "Bitmap.h"
-#include "Error.h"
-#include "Endian.h"
-#include "File.h"
-
-#undef max
-#undef min
-
-#include "NvTriStrip/NvTriStrip.h"
+namespace LibGens {
+	class MirageNode {
+		protected:
+			string name;
+			unsigned int value;
+			void *data;
+			size_t data_address;
+			vector<MirageNode *> nodes;
+		public:
+			MirageNode();
+			MirageNode(string name_p, unsigned int value_p);
+			~MirageNode();
+			bool read(File *file);
+			void write(File *file, bool last_node = false);
+			string getName();
+			unsigned int getValue();
+			size_t getDataAddress();
+			void setName(string v);
+			void setValue(unsigned int v);
+			void setData(void *data_p, int data_type);
+			vector<MirageNode *> getNodes();
+			void addNode(MirageNode *node);
+			MirageNode *newNode(string name = "", unsigned int value = 0);
+			MirageNode *find(string name, bool search_children = true);
+	};
+};

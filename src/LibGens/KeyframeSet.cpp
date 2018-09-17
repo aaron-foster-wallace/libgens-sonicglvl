@@ -36,6 +36,7 @@ namespace LibGens {
 		file->readInt32BE(&keyframes_count);
 		file->readInt32BE(&keyframes_index);
 		
+		keyframes.reserve(keyframes_count);
 		for (size_t i=keyframes_index; i<keyframes_index+keyframes_count; i++) {
 			keyframes.push_back(keyframes_buffer[i]);
 

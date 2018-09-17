@@ -59,6 +59,7 @@ namespace LibGens {
 		}
 
 		size_t keyframe_count = size / LIBGENS_ANIMATION_KEYFRAME_BYTES;
+		keyframes_buffer.reserve(keyframe_count);
 		for (size_t i=0; i<keyframe_count; i++) {
 			Keyframe *keyframe = new Keyframe();
 			keyframe->read(file);

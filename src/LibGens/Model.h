@@ -22,7 +22,6 @@
 #define LIBGENS_MODEL_ROOT_DYNAMIC_UNLEASHED      2
 #define LIBGENS_MODEL_ROOT_DYNAMIC_UNLEASHED_2    4
 #define LIBGENS_MODEL_ROOT_DYNAMIC_GENERATIONS    5
-#define LIBGENS_MODEL_ROOT_DYNAMIC_LOST_WORLD     6
 
 #define LIBGENS_MODEL_ERROR_MESSAGE_NULL_FILE           "Trying to read model data from unreferenced file."
 #define LIBGENS_MODEL_ERROR_MESSAGE_WRITE_NULL_FILE     "Trying to write model data to an unreferenced file."
@@ -32,13 +31,15 @@ namespace LibGens {
 	class Bone;
 	class Vertex;
 	class VRMapSample;
+	class MirageProperty;
 
 	class Model {
 		protected:
 			vector<Mesh *> meshes;
 			vector<Bone *> bones;
+			vector<MirageProperty *> properties;
 			string name;
-			unsigned int model_flag;
+			unsigned int has_instances;
 			string filename;
 			bool terrain_mode;
 			AABB global_aabb;
@@ -55,6 +56,7 @@ namespace LibGens {
 			void readSkeleton(File *file);
 			void writeRootNodeDynamicGenerations(File *file);
 			void writeRootNodeDynamicUnleashed2(File *file);
+			void writeRootNodeDynamicLostWorld(File *file);
 			void buildAABB();
 			AABB getAABB();
 			void setTerrainMode(bool v);
@@ -76,6 +78,7 @@ namespace LibGens {
 			void mergeModel(Model *model, LibGens::Matrix4 transform, float uv2_left, float uv2_right, float uv2_top, float uv2_bottom);
 			unsigned int getEstimatedMemorySize();
 			void changeVertexFormat(int format);
+			void setPropertyValue(string name, unsigned int value);
 			~Model();
 	};
 }

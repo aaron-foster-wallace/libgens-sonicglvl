@@ -20,6 +20,8 @@
 #include "TerrainInstance.h"
 #include "Model.h"
 #include "Vertex.h"
+#include "Submesh.h"
+#include "Light.h"
 
 namespace LibGens {
 	TerrainInstance::TerrainInstance() {
@@ -75,23 +77,25 @@ namespace LibGens {
 			return;
 		}
 
-		unsigned int identifiers_total=0;
-		size_t identifiers_address=0;
+		unsigned int light_indices_total=0;
+		size_t light_indices_address=0;
 		unsigned int faces_total=0;
 		size_t faces_address=0;
 
-		file->readInt32BE(&identifiers_total);
-		file->readInt32BEA(&identifiers_address);
+		file->readInt32BE(&light_indices_total);
+		file->readInt32BEA(&light_indices_address);
 		file->readInt32BE(&faces_total);
 		file->readInt32BEA(&faces_address);
 
-		for (size_t i=0; i<identifiers_total; i++) {
-			file->goToAddress(identifiers_address + i*4);
+		light_indices.reserve(light_indices_total);
+		for (size_t i=0; i<light_indices_total; i++) {
+			file->goToAddress(light_indices_address + i*4);
 			unsigned int identifier=0;
 			file->readInt32BE(&identifier);
-			identifiers.push_back(identifier);
+			light_indices.push_back(identifier);
 		}
 
+		faces.reserve(faces_total);
 		for (size_t i=0; i<faces_total; i++) {
 			file->goToAddress(faces_address + i*2);
 			unsigned short face=0;
@@ -108,19 +112,19 @@ namespace LibGens {
 
 		size_t header_address=file->getCurrentAddress();
 
-		unsigned int identifiers_total=identifiers.size();
-		size_t identifiers_address=0;
+		unsigned int light_indices_total=light_indices.size();
+		size_t light_indices_address=0;
 		unsigned int faces_total=faces.size();
 		size_t faces_address=0;
 
-		file->writeInt32BE(&identifiers_total);
+		file->writeInt32BE(&light_indices_total);
 		file->writeNull(4);
 		file->writeInt32BE(&faces_total);
 		file->writeNull(4);
 
-		identifiers_address = file->getCurrentAddress();
-		for (size_t i=0; i<identifiers_total; i++) {
-			file->writeInt32BE(&identifiers[i]);
+		light_indices_address = file->getCurrentAddress();
+		for (size_t i=0; i<light_indices_total; i++) {
+			file->writeInt32BE(&light_indices[i]);
 		}
 
 		faces_address = file->getCurrentAddress();
@@ -132,11 +136,33 @@ namespace LibGens {
 		// Fix header
 		file->goToAddress(header_address);
 		file->moveAddress(4);
-		file->writeInt32BEA(&identifiers_address);
+		file->writeInt32BEA(&light_indices_address);
 		file->moveAddress(4);
 		file->writeInt32BEA(&faces_address);
 
 		file->goToEnd();
+	}
+
+	void TerrainInstanceElement::build(vector<unsigned int> light_indices_p, vector<Polygon> faces_p) {
+		light_indices = light_indices_p;
+
+		vector<unsigned short> indices;
+		indices.reserve(faces_p.size() * 3);
+		for (vector<Polygon>::iterator it = faces_p.begin(); it != faces_p.end(); it++) {
+			indices.push_back((*it).a);
+			indices.push_back((*it).b);
+			indices.push_back((*it).c);
+		}
+
+		// Generate strips
+		EnableRestart(-1);
+		SetStitchStrips(true);
+
+		unsigned short numGroups;
+		PrimitiveGroup *groups;
+		GenerateStrips(indices.data(), indices.size(), &groups, &numGroups);
+		faces = vector<unsigned short>(groups[0].indices, groups[0].indices + groups[0].numIndices);
+		delete[] groups;
 	}
 
 	
@@ -151,6 +177,7 @@ namespace LibGens {
 		file->readInt32BE(&element_count);
 		file->readInt32BEA(&element_table_address);
 
+		elements.reserve(element_count);
 		for (size_t i=0; i<element_count; i++) {
 			file->goToAddress(element_table_address + i*4);
 
@@ -213,6 +240,7 @@ namespace LibGens {
 			file->readInt32BE(&submesh_count);
 			file->readInt32BEA(&submesh_table_address);
 
+			submeshes[slot].reserve(submesh_count);
 			for (size_t i=0; i<submesh_count; i++) {
 				file->goToAddress(submesh_table_address + i*4);
 
@@ -321,6 +349,7 @@ namespace LibGens {
 
 		// Instance Mesh
 		if (file->getRootNodeType() == LIBGENS_MODEL_ROOT_DYNAMIC_GENERATIONS) {
+			meshes.reserve(instance_mesh_count);
 			for (size_t i=0; i<instance_mesh_count; i++) {
 				file->goToAddress(instance_mesh_address + i*4);
 
@@ -345,8 +374,6 @@ namespace LibGens {
 			}
 		}
 	}
-
-	
 
 	void TerrainInstance::write(File *file) {
 		if (!file) {
@@ -535,6 +562,132 @@ namespace LibGens {
 		
 	}
 
+	void TerrainInstance::buildMeshes(Model *model, LightList *light_list) {
+		if (!model) {
+			return;
+		}
+
+		vector<Light *> lights;
+		
+		bool has_omni_lights = false;
+		if (light_list) {
+			lights = light_list->getLights();
+
+			for (vector<Light *>::iterator it = lights.begin(); it != lights.end(); it++) {
+				if ((*it)->getType() == LIBGENS_LIGHT_TYPE_OMNI) {
+					has_omni_lights = true;
+					break;
+				}
+			}
+		}
+
+		this->meshes.clear();
+
+		AABB aabb = model->getAABB();
+		aabb.transform(matrix);
+
+		vector<Mesh *> meshes = model->getMeshes();
+		for (vector<Mesh *>::iterator it = meshes.begin(); it != meshes.end(); it++) {
+			TerrainInstanceMesh *mesh = new TerrainInstanceMesh();
+
+			vector<Submesh *>* submesh_slots = (*it)->getSubmeshSlots();
+			for (int i = 0; i < LIBGENS_MODEL_SUBMESH_ROOT_SLOTS; i++) {
+				for (vector<Submesh *>::iterator it2 = submesh_slots[i].begin(); it2 != submesh_slots[i].end(); it2++) {
+					TerrainInstanceSubmesh *submesh = new TerrainInstanceSubmesh();
+
+					if (has_omni_lights) {
+						vector<Vertex *> vertices = (*it2)->getVertices();
+						vector<Polygon> faces = (*it2)->getFaces();
+
+						vector<AABB> face_aabbs;
+						face_aabbs.reserve(faces.size());
+						for (vector<Polygon>::iterator it3 = faces.begin(); it3 != faces.end(); it3++) {
+							face_aabbs.push_back(AABB(vertices[(*it3).a]->getTPosition(matrix),
+													  vertices[(*it3).b]->getTPosition(matrix),
+													  vertices[(*it3).c]->getTPosition(matrix)));
+						}
+
+						struct Element {
+							set<unsigned int> light_indices;
+							vector<Polygon> faces;
+						};
+
+						vector<Element *> face_elements;
+						face_elements.resize(faces.size(), NULL);
+
+						for (unsigned int j = 0; j < lights.size(); j++) {
+							if (lights[j]->getType() == LIBGENS_LIGHT_TYPE_OMNI) {
+								// TODO: Maybe we can use triangle vs sphere intersection
+								// for this?
+								AABB light_aabb;
+								light_aabb.reset();
+								light_aabb.addPoint(lights[j]->getPosition() + lights[j]->getOuterRange());
+								light_aabb.addPoint(lights[j]->getPosition() - lights[j]->getOuterRange());
+
+								if (!aabb.intersects(light_aabb)) {
+									continue;
+								}
+
+								Element *light_element = new Element();
+								light_element->faces.clear();
+								light_element->light_indices.clear();
+								light_element->light_indices.insert(j);
+
+								for (unsigned int f = 0; f < faces.size(); f++) {
+									if (face_aabbs[f].intersects(light_aabb)) {
+										Element *element = face_elements[f];
+										if (element) {
+											element->light_indices.insert(j);
+										}
+										else {
+											light_element->faces.push_back(faces[f]);
+											face_elements[f] = light_element;
+										}
+									}
+								}
+
+								if (light_element->faces.empty()) {
+									delete light_element;
+								}
+							}
+						}
+
+						int affected_face_count = 0;
+
+						set<Element *> elements(face_elements.begin(), face_elements.end());
+						for (set<Element *>::iterator it3 = elements.begin(); it3 != elements.end(); it3++) {
+							if (*it3) {
+								TerrainInstanceElement *element = new TerrainInstanceElement();
+								element->build(vector<unsigned int>((*it3)->light_indices.begin(), (*it3)->light_indices.end()), (*it3)->faces);
+								submesh->addElement(element);
+								affected_face_count += (*it3)->faces.size();
+								delete *it3;
+							}
+						}
+
+						if (elements.size() > 1) {
+							vector<Polygon> unaffected_faces;
+							unaffected_faces.reserve(faces.size() - affected_face_count);
+
+							for (unsigned int f = 0; f < faces.size(); f++) {
+								if (face_elements[f] == NULL) {
+									unaffected_faces.push_back(faces[f]);
+								}
+							}
+
+							TerrainInstanceElement *element = new TerrainInstanceElement();
+							element->build(vector<unsigned int>(), unaffected_faces);
+							submesh->addElement(element);
+						}
+					}
+
+					mesh->addSubmesh(submesh, i);
+				}
+			}
+
+			this->meshes.push_back(mesh);
+		}
+	}
 
 	TerrainInstance::~TerrainInstance() {
 		for (vector<TerrainInstanceMesh *>::iterator it=meshes.begin(); it!=meshes.end(); it++) {

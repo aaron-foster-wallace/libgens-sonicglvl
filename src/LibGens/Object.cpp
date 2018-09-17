@@ -167,7 +167,7 @@ namespace LibGens {
 	}
 
 	void MultiSetParam::readORC(File *file, unsigned int count) {
-		for (int i = 0; i < count; i++) {
+		for (unsigned int i = 0; i < count; i++) {
 			LibGens::MultiSetNode *node = new LibGens::MultiSetNode();
 			node->readORC(file);
 			nodes.push_back(node);
@@ -1497,7 +1497,7 @@ namespace LibGens {
 					unsigned int curAddr = file->getCurrentAddress();
 					file->goToAddress(offset);
 
-					for (int a = 0; a < count; a++)
+					for (unsigned int a = 0; a < count; a++)
 						file->readInt32BE(&array_cast->value[a]);
 
 					file->goToAddress(curAddr);
@@ -1656,7 +1656,7 @@ namespace LibGens {
 
 		// Write arrays
 		file->fixPadding(4);
-		for (int a = 0; a < arrays.size(); a++) {
+		for (unsigned int a = 0; a < arrays.size(); a++) {
 			uint32array *array_p = &arrays[a];
 			unsigned int cur = file->getCurrentAddress();
 			unsigned int num = array_p->elem->value.size();
@@ -1666,7 +1666,7 @@ namespace LibGens {
 			file->writeInt32BE(&num);
 			file->goToAddress(cur);
 
-			for (int i = 0; i < num; i++)
+			for (unsigned int i = 0; i < num; i++)
 				file->writeInt32BE(&array_p->elem->value[i]);
 		}
 	}

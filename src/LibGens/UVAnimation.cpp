@@ -63,6 +63,7 @@ namespace LibGens {
 
 		file->goToAddress(animation_table_address);
 
+		animation_sets.reserve(animations_count);
 		for (size_t animation=0; animation<animations_count; animation++) {
 			UVAnimationSet *animation_set = new UVAnimationSet();
 			animation_set->read(file, names_buffer, keyframes_buffer);

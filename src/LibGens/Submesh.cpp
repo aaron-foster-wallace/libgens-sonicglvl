@@ -88,6 +88,7 @@ namespace LibGens {
 
 		// Faces in Triangle Strip format
 		file->goToAddress(faces_address);
+		faces.reserve(faces_count);
 		for (size_t i=0; i<faces_count; i++) {
 			unsigned short face=0;
 			file->readInt16BE(&face);
@@ -135,6 +136,7 @@ namespace LibGens {
 		vertex_format->setSize(vertex_size);
 
 		// Vertices
+		vertices.reserve(vertices_count);
 		for (size_t i=0; i<vertices_count; i++) {
 			file->goToAddress(vertices_address + i*vertex_size);
 
@@ -145,6 +147,7 @@ namespace LibGens {
 		}
 
 		// Bone Table
+		bone_table.reserve(bones_size);
 		for (size_t i=0; i<bones_size; i++) {
 			file->goToAddress(bones_address+i*1);
 			unsigned char bone=0;
@@ -153,6 +156,8 @@ namespace LibGens {
 		}
 
 		// Material Texture Units
+		texture_units.reserve(texture_units_size);
+		texture_ids.reserve(texture_units_size);
 		for (size_t i=0; i<texture_units_size; i++) {
 			file->goToAddress(texture_units_address+i*4);
 			size_t texture_unit_address=0;
@@ -297,11 +302,12 @@ namespace LibGens {
 		vertices = vertices_p;
 		faces_vectors = faces_vectors_p;
 
-		vector<LibGens::Vertex *> new_vertices;
+		vector<Vertex *> new_vertices;
 		new_vertices.clear();
 
 		vector<unsigned short> new_face_map;
 		new_face_map.clear();
+		new_face_map.reserve(vertices.size());
 
 		for (size_t x=0; x<vertices.size(); x++) {
 			LibGens::Vertex *v=vertices[x];
@@ -324,44 +330,29 @@ namespace LibGens {
 
 		vertices = new_vertices;
 
+		vector<unsigned short> indices;
+		indices.reserve(faces_vectors.size() * 3);
+
 		for (size_t i=0; i<faces_vectors.size(); i++) {
 			faces_vectors[i].a = new_face_map[(int)faces_vectors[i].a];
 			faces_vectors[i].b = new_face_map[(int)faces_vectors[i].b];
 			faces_vectors[i].c = new_face_map[(int)faces_vectors[i].c];
-		}
 
+			// Push to the index vector for stripification
+			indices.push_back(faces_vectors[i].a);
+			indices.push_back(faces_vectors[i].b);
+			indices.push_back(faces_vectors[i].c);
+		}
 		
-		triangle_stripper::indices tri_indices;
-		for (size_t i=0; i<faces_vectors.size(); i++) {
-			tri_indices.push_back((int)faces_vectors[i].a);
-			tri_indices.push_back((int)faces_vectors[i].b);
-			tri_indices.push_back((int)faces_vectors[i].c);
-		}
+		// Generate strips
+		EnableRestart(-1);
+		SetStitchStrips(true);
 
-		triangle_stripper::tri_stripper stripper(tri_indices);
-		stripper.SetCacheSize(0);
-		stripper.SetBackwardSearch(false);
-		triangle_stripper::primitive_vector out_vector;
-		stripper.Strip(&out_vector);
-
-		for (size_t i=0; i<out_vector.size(); i+=1) {
-			if (out_vector[i].Type == triangle_stripper::TRIANGLE_STRIP) {
-				for (size_t j=0; j<out_vector[i].Indices.size(); j++) {
-					faces.push_back(out_vector[i].Indices[j]);
-				}
-				faces.push_back(0xFFFF);
-			}
-			else {
-				for (size_t j=0; j<out_vector[i].Indices.size(); j+=3) {
-					faces.push_back(out_vector[i].Indices[j]);
-					faces.push_back(out_vector[i].Indices[j+1]);
-					faces.push_back(out_vector[i].Indices[j+2]);
-					faces.push_back(0xFFFF);
-				}
-			}
-		}
-
-		if (faces[faces.size()-1]==0xFFFF) faces.resize(faces.size()-1);
+		unsigned short numGroups;
+		PrimitiveGroup *groups;
+		GenerateStrips(indices.data(), indices.size(), &groups, &numGroups);
+		faces = vector<unsigned short>(groups[0].indices, groups[0].indices + groups[0].numIndices);
+		delete[] groups;
 
 		buildAABB();
 	}

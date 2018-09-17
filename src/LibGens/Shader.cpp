@@ -73,6 +73,7 @@ namespace LibGens {
 
 			printf("Reading parameter list #%d with %d elements.\n", slot, parameters_count);
 			
+			parameter_lists[slot].reserve(parameters_count);
 			for (size_t i=0; i<parameters_count; i++) {
 				file->goToAddress(parameters_table_address + i*4);
 
@@ -130,6 +131,7 @@ namespace LibGens {
 
 		printf("Shader that uses the %s file and has %d parameter files.\n", shader_filename.c_str(), shader_parameter_count);
 
+		shader_parameter_filenames.reserve(shader_parameter_count);
 		for (size_t i=0; i<shader_parameter_count; i++) {
 			file->goToAddress(shader_parameter_table_address + i*4);
 
@@ -190,6 +192,7 @@ namespace LibGens {
 
 		printf("Pixel Shader Set %s (Mode: %s, Flag: %d) with %d Vertex Shader sets.\n", pixel_shader_name.c_str(), rendering_mode.c_str(), shader_flag, vertex_shader_sets_count);
 
+		vertex_shader_sets.reserve(vertex_shader_sets_count);
 		for (size_t i=0; i<vertex_shader_sets_count; i++) {
 			file->goToAddress(vertex_shader_set_table_address + i*4);
 
@@ -252,6 +255,7 @@ namespace LibGens {
 
 		printf("Found %d Pixel Shader Sets in shader list.\n", shader_set_count);
 
+		shader_sets.reserve(shader_set_count);
 		for (size_t i=0; i<shader_set_count; i++) {
 			file->goToAddress(shader_set_table_address + i*4);
 

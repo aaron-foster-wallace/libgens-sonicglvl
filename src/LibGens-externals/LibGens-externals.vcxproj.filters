@@ -19,6 +19,9 @@
     <Filter Include="Externals\tristripper\detail">
       <UniqueIdentifier>{e55ac474-994d-487f-8926-b1f1f86a07cd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Externals\NvTriStrip">
+      <UniqueIdentifier>{c2e9ceb2-f71d-4a4d-ac53-9b929f21a7f9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="half\half.cpp">
@@ -39,15 +42,8 @@
     <ClCompile Include="tinyxml\tinyxmlparser.cpp">
       <Filter>Externals\tinyxml</Filter>
     </ClCompile>
-    <ClCompile Include="tristripper\connectivity_graph.cpp">
-      <Filter>Externals\tristripper</Filter>
-    </ClCompile>
-    <ClCompile Include="tristripper\policy.cpp">
-      <Filter>Externals\tristripper</Filter>
-    </ClCompile>
-    <ClCompile Include="tristripper\tri_stripper.cpp">
-      <Filter>Externals\tristripper</Filter>
-    </ClCompile>
+    <ClCompile Include="NvTriStrip\NvTriStrip.cpp" />
+    <ClCompile Include="NvTriStrip\NvTriStripObjects.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="half\half.h">
@@ -62,29 +58,8 @@
     <ClInclude Include="tinyxml\tinyxml.h">
       <Filter>Externals\tinyxml</Filter>
     </ClInclude>
-    <ClInclude Include="tristripper\public_types.h">
-      <Filter>Externals\tristripper</Filter>
-    </ClInclude>
-    <ClInclude Include="tristripper\tri_stripper.h">
-      <Filter>Externals\tristripper</Filter>
-    </ClInclude>
-    <ClInclude Include="tristripper\detail\cache_simulator.h">
-      <Filter>Externals\tristripper\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="tristripper\detail\connectivity_graph.h">
-      <Filter>Externals\tristripper\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="tristripper\detail\graph_array.h">
-      <Filter>Externals\tristripper\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="tristripper\detail\heap_array.h">
-      <Filter>Externals\tristripper\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="tristripper\detail\policy.h">
-      <Filter>Externals\tristripper\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="tristripper\detail\types.h">
-      <Filter>Externals\tristripper\detail</Filter>
-    </ClInclude>
+    <ClInclude Include="NvTriStrip\VertexCache.h" />
+    <ClInclude Include="NvTriStrip\NvTriStrip.h" />
+    <ClInclude Include="NvTriStrip\NvTriStripObjects.h" />
   </ItemGroup>
 </Project>

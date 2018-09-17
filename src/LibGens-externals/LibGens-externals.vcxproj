@@ -92,28 +92,22 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="half\half.cpp" />
+    <ClCompile Include="NvTriStrip\NvTriStrip.cpp" />
+    <ClCompile Include="NvTriStrip\NvTriStripObjects.cpp" />
     <ClCompile Include="sha1\sha1.cpp" />
     <ClCompile Include="tinyxml\tinystr.cpp" />
     <ClCompile Include="tinyxml\tinyxml.cpp" />
     <ClCompile Include="tinyxml\tinyxmlerror.cpp" />
     <ClCompile Include="tinyxml\tinyxmlparser.cpp" />
-    <ClCompile Include="tristripper\connectivity_graph.cpp" />
-    <ClCompile Include="tristripper\policy.cpp" />
-    <ClCompile Include="tristripper\tri_stripper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="half\half.h" />
+    <ClInclude Include="NvTriStrip\NvTriStrip.h" />
+    <ClInclude Include="NvTriStrip\NvTriStripObjects.h" />
+    <ClInclude Include="NvTriStrip\VertexCache.h" />
     <ClInclude Include="sha1\sha1.h" />
     <ClInclude Include="tinyxml\tinystr.h" />
     <ClInclude Include="tinyxml\tinyxml.h" />
-    <ClInclude Include="tristripper\detail\cache_simulator.h" />
-    <ClInclude Include="tristripper\detail\connectivity_graph.h" />
-    <ClInclude Include="tristripper\detail\graph_array.h" />
-    <ClInclude Include="tristripper\detail\heap_array.h" />
-    <ClInclude Include="tristripper\detail\policy.h" />
-    <ClInclude Include="tristripper\detail\types.h" />
-    <ClInclude Include="tristripper\public_types.h" />
-    <ClInclude Include="tristripper\tri_stripper.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

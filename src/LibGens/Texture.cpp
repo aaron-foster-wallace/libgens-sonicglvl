@@ -18,9 +18,20 @@
 //=========================================================================
 
 #include "Texture.h"
+#include "Material.h"
 
 namespace LibGens {
 	Texture::Texture() {
+	}
+
+	Texture::Texture(string filename_p, string internal_name_p) {
+		File file(filename_p, LIBGENS_FILE_READ_BINARY);
+
+		if (file.valid()) {
+			file.readHeader();
+			read(&file, internal_name_p);
+			file.close();
+		}
 	}
 
 	Texture::Texture(string internal_name_p, string unit_p, string name_p) {
@@ -53,8 +64,8 @@ namespace LibGens {
 		return internal_name;
 	}
 
-	void Texture::read(File *file, string id) {
-		internal_name = id;
+	void Texture::read(File *file, string internal_name_p) {
+		internal_name = internal_name_p;
 		size_t header_address=file->getCurrentAddress();
 		
 		size_t file_address=0;
@@ -92,4 +103,14 @@ namespace LibGens {
 		file->goToEnd();
 	}
 
+	void Texture::save(string filename) {
+		File file(filename, LIBGENS_FILE_WRITE_BINARY);
+
+		if (file.valid()) {
+			file.prepareHeader(LIBGENS_TEXTURE_ROOT_UNLEASHED);
+			write(&file);
+			file.writeHeader(true);
+			file.close();
+		}
+	}
 };

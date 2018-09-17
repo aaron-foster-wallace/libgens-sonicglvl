@@ -21,14 +21,18 @@
 #include "Mesh.h"
 #include "Model.h"
 #include "TerrainGroup.h"
+#include "MirageNode.h"
+#include "MirageProperty.h"
 
 namespace LibGens {
 	Model::Model() {
 		meshes.clear();
 		bones.clear();
+		properties.clear();
 		name="";
 		filename="";
 		terrain_mode = false;
+		has_instances = true;
 	}
 
 	Model::Model(string filename_p) {
@@ -78,8 +82,8 @@ namespace LibGens {
 				readRootNodeDynamicGenerations(file);
 				break;
 
-			case LIBGENS_MODEL_ROOT_DYNAMIC_LOST_WORLD:
-				readRootNodeDynamicGenerations(file);
+			case LIBGENS_FILE_HEADER_ROOT_TYPE_LOST_WORLD:
+				readRootNodeDynamicLostWorld(file);
 				break;
 		}
 	}
@@ -130,7 +134,7 @@ namespace LibGens {
 
 		if (terrain_mode) {
 			file->readInt32BEA(&mesh_name_address);
-			file->readInt32BE(&model_flag);
+			file->readInt32BE(&has_instances);
 
 			// Read Name
 			file->goToAddress(mesh_name_address);
@@ -140,6 +144,7 @@ namespace LibGens {
 			readSkeleton(file);
 		}
 
+		meshes.reserve(mesh_count);
 		for (size_t i=0; i<mesh_count; i++) {
 			size_t mesh_address=0;
 			file->goToAddress(mesh_table_address + i*4);
@@ -159,51 +164,34 @@ namespace LibGens {
 
 	
 	void Model::readRootNodeDynamicLostWorld(File *file) {
-		/*
 		if (!file) {
 			Error::addMessage(Error::NULL_REFERENCE, LIBGENS_MODEL_ERROR_MESSAGE_NULL_FILE);
 			return;
 		}
 
-		size_t header_address=file->getCurrentAddress();
+		MirageNode *root_node = new MirageNode();
+		root_node->read(file);
 
-		// Read Meshes
-		unsigned int mesh_count=0;
-		size_t mesh_table_address=0;
-		size_t mesh_name_address=0;
-
-		
-		file->readInt32BE(&mesh_count);
-		file->readInt32BEA(&mesh_table_address);
-
-		if (terrain_mode) {
-			file->readInt32BEA(&mesh_name_address);
-			file->readInt32BE(&model_flag);
-
-			// Read Name
-			file->goToAddress(mesh_name_address);
-			file->readString(&name);
-		}
-		else {
-			readSkeleton(file);
+		MirageNode *property_node = root_node->find("SCAParam");
+		if (property_node) {
+			vector<MirageNode *> property_nodes = property_node->getNodes();
+			for (vector<MirageNode *>::iterator it = property_nodes.begin(); it != property_nodes.end(); it++) {
+				properties.push_back(new MirageProperty(*it));
+			}
 		}
 
-		for (size_t i=0; i<mesh_count; i++) {
-			size_t mesh_address=0;
-			file->goToAddress(mesh_table_address + i*4);
-			file->readInt32BEA(&mesh_address);
-			file->goToAddress(mesh_address);
+		MirageNode *contexts_node = root_node->find("Contexts", false);
+		if (contexts_node) {
+			file->goToAddress(contexts_node->getDataAddress());
 
-			Mesh *mesh = new Mesh();
-			mesh->read(file);
-			mesh->buildAABB();
-			meshes.push_back(mesh);
+			switch (contexts_node->getValue()) {
+				case LIBGENS_MODEL_ROOT_DYNAMIC_GENERATIONS:
+					readRootNodeDynamicGenerations(file);
+					break;
+			}
 		}
 
-		if (terrain_mode) {
-			buildAABB();
-		}
-		*/
+		delete root_node;
 	}
 
 	
@@ -230,6 +218,7 @@ namespace LibGens {
 		file->readInt32BEA(&bone_matrix_address);
 		file->readInt32BEA(&global_aabb_address);
 
+		bones.reserve(bone_total);
 		for (size_t i=0; i<bone_total; i++) {
 			file->goToAddress(bone_definition_table_address + i*4);
 			size_t address=0;
@@ -272,6 +261,9 @@ namespace LibGens {
 			case LIBGENS_MODEL_ROOT_DYNAMIC_UNLEASHED_2:
 				writeRootNodeDynamicUnleashed2(file);
 				break;
+			case LIBGENS_FILE_HEADER_ROOT_TYPE_LOST_WORLD:
+				writeRootNodeDynamicLostWorld(file);
+				break;
 		}
 	}
 
@@ -297,7 +289,7 @@ namespace LibGens {
 
 		if (terrain_mode) {
 			file->writeNull(4);
-			file->writeInt32BE(&model_flag);
+			file->writeInt32BE(&has_instances);
 		}
 		else {
 			file->writeNull(8);
@@ -431,7 +423,24 @@ namespace LibGens {
 		file->goToEnd();
 	}
 
+	void Model::writeRootNodeDynamicLostWorld(File *file) {
+		MirageNode *root_node = new MirageNode("Model", 1);
+		
+		if (properties.size()) {
+			MirageNode *property_node = root_node->newNode("NodesExt", 1)->newNode("NodePrms", 0)->newNode("SCAParam", 1);
+			for (vector<MirageProperty *>::iterator it = properties.begin(); it != properties.end(); it++) {
+				property_node->addNode((*it)->toMirageNode());
+			}
+		}
 
+		MirageNode *contexts_node = new MirageNode();
+		contexts_node->setName("Contexts");
+		contexts_node->setData(this, LIBGENS_MODEL_ROOT_DYNAMIC_GENERATIONS);
+		root_node->addNode(contexts_node);
+
+		root_node->write(file, true);
+		delete root_node;
+	}
 
 	list<Vertex *> Model::getVertexList() {
 		list<Vertex *> vertices;
@@ -572,6 +581,7 @@ namespace LibGens {
 
 	void Model::setTerrainMode(bool v) {
 		terrain_mode = v;
+		has_instances = v;
 	}
 
 	vector<Bone *> Model::getBones() {
@@ -616,6 +626,19 @@ namespace LibGens {
 		for (vector<Mesh *>::iterator it=meshes.begin(); it!=meshes.end(); it++) {
 			(*it)->changeVertexFormat(format);
 		}
+	}
+
+	void Model::setPropertyValue(string name, unsigned int value) {
+		if (name.size() > 8) name = name.substr(0, 8);
+		
+		for (vector<MirageProperty *>::iterator it = properties.begin(); it != properties.end(); it++) {
+			if ((*it)->getName() == name) {
+				(*it)->setValue(value);
+				return;
+			}
+		}
+
+		properties.push_back(new MirageProperty(name, value));
 	}
 };
 

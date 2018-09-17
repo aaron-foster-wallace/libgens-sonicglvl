@@ -17,36 +17,23 @@
 //    Read AUTHORS.txt, LICENSE.txt and COPYRIGHT.txt for more details.
 //=========================================================================
 
-using namespace std;
+#pragma once
 
-#include <stack>
-#include <list>
-#include <set>
-#include <iterator>
-#include <vector>
-#include <string>
-#include <map>
-#include <algorithm>
-#include <ctype.h>
-#include <pthread.h>
-#include "allegro5/allegro.h"
-#include "allegro5/allegro_image.h"
-#if defined(_WIN32) || defined(WIN32)
-#include <fbxsdk.h>
-#include <fbxsdk/fileio/fbxiosettings.h>
-#endif
+namespace LibGens {
+	class MirageNode;
 
-// Common Headers only should be pre-compiled
-#include "half/half.h"
-#include "sha1/sha1.h"
-#include "tinyxml/tinyxml.h"
-#include "MathGens.h"
-#include "Bitmap.h"
-#include "Error.h"
-#include "Endian.h"
-#include "File.h"
+	class MirageProperty {
+	protected:
+		string name;
+		unsigned int value;
+	public:
+		MirageProperty(string name_p, unsigned int value_p);
+		MirageProperty(MirageNode *mirage_node_p);
 
-#undef max
-#undef min
-
-#include "NvTriStrip/NvTriStrip.h"
+		string getName();
+		unsigned int getValue();
+		void setName(string v);
+		void setValue(unsigned int v);
+		MirageNode *toMirageNode();
+	};
+}

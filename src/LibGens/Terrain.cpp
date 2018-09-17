@@ -97,6 +97,8 @@ namespace LibGens {
 		file->goToAddress(name_address);
 		file->readString(&filename);
 
+		instance_centers.reserve(instance_total);
+		instance_radius.reserve(instance_total);
 		for (size_t i=0; i<instance_total; i++) {
 			file->goToAddress(instances_address + i*4);
 			size_t address=0;
@@ -172,6 +174,8 @@ namespace LibGens {
 		file->readInt32BE(&group_count);
 		file->readInt32BEA(&group_table_address);
 
+		groups.reserve(group_count);
+		groups_info.reserve(group_count);
 		for (size_t i=0; i<group_count; i++) {
 			size_t group_address=0;
 			file->goToAddress(group_table_address + i*4);

@@ -76,7 +76,7 @@ namespace LibGens {
 		vector<objType> objTypes;
 		objTypes.reserve(numObjTypes);
 
-		for (int t = 0; t < numObjTypes; t++) {
+		for (unsigned int t = 0; t < numObjTypes; t++) {
 			objType type;
 
 			size_t nameOffset, indicesOffset;
@@ -90,7 +90,7 @@ namespace LibGens {
 			file->goToAddress(indicesOffset);
 
 			type.indices.resize(type.count);
-			for (int o = 0; o < type.count; o++)
+			for (unsigned int o = 0; o < type.count; o++)
 				file->readInt16BE(&type.indices[o]);
 
 			file->goToAddress(curAddress);
@@ -101,13 +101,13 @@ namespace LibGens {
 		vector<size_t> objOffsets(numObjects);
 		file->goToAddress(objOffsetsAddress);
 
-		for (int o = 0; o < numObjects; o++)
+		for (unsigned int o = 0; o < numObjects; o++)
 			file->readInt32BEA(&objOffsets[o]);
 
 		// Objects
 		objects.resize(numObjects, 0);
 
-		for (int t = 0; t < numObjTypes; t++)
+		for (unsigned int t = 0; t < numObjTypes; t++)
 		{
 			objType& type = objTypes[t];
 			Object *temp = library->getTemplate(type.name);
@@ -118,7 +118,7 @@ namespace LibGens {
 				continue;
 			}
 
-			for (int o = 0; o < type.count; o++)
+			for (unsigned int o = 0; o < type.count; o++)
 			{
 				unsigned short index = type.indices[o];
 				size_t offset = objOffsets[index];
@@ -198,7 +198,7 @@ namespace LibGens {
 
 				bool new_type = true;
 
-				for (int t = 0; t < types.size(); t++) {
+				for (unsigned int t = 0; t < types.size(); t++) {
 					objType *type = &types[t];
 
 					if (type->name == name) {
@@ -248,7 +248,7 @@ namespace LibGens {
 			// Type Table
 			GensStringTable table;
 
-			for (int t = 0; t < types.size(); t++) {
+			for (unsigned int t = 0; t < types.size(); t++) {
 				objType *type = &types[t];
 				offsets.push_back(file.getCurrentAddress());
 				type->offset = file.getCurrentAddress();
@@ -259,7 +259,7 @@ namespace LibGens {
 			}
 
 			// Object Indices
-			for (int t = 0; t < types.size(); t++) {
+			for (unsigned int t = 0; t < types.size(); t++) {
 				objType *type = &types[t];
 
 				unsigned int cur = file.getCurrentAddress();
@@ -276,7 +276,7 @@ namespace LibGens {
 
 			// Object Offsets
 			unsigned int objOffsetsStart = file.getCurrentAddress();
-			for (int o = 0; o < objects.size(); o++) {
+			for (unsigned int o = 0; o < objects.size(); o++) {
 				offsets.push_back(file.getCurrentAddress());
 				file.writeNull(4);
 			}
@@ -312,7 +312,7 @@ namespace LibGens {
 
 			unsigned int last = file.getRootNodeAddress();
 
-			for (int o = 0; o < offsets.size(); o++) {
+			for (unsigned int o = 0; o < offsets.size(); o++) {
 				unsigned int val = offsets[o] - last;
 
 				if (val <= 0xFC) {
@@ -356,7 +356,7 @@ namespace LibGens {
 
 			file.goToAddress(objOffsetsStart);
 
-			for (int o = 0; o < objects.size(); o++)
+			for (unsigned int o = 0; o < objects.size(); o++)
 				file.writeInt32BEA(&obj_offsets[o]);
 
 			// Done

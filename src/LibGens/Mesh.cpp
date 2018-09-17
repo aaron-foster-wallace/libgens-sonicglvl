@@ -40,7 +40,7 @@ namespace LibGens {
 
 	Mesh::Mesh(Mesh *clone, LibGens::Matrix4 transform, float uv2_left, float uv2_right, float uv2_top, float uv2_bottom) {
 		for (int slot=0; slot<LIBGENS_MODEL_SUBMESH_SLOTS; slot++) {
-			for (int i = 0; i < clone->submeshes[slot].size(); i++) {
+			for (unsigned int i = 0; i < clone->submeshes[slot].size(); i++) {
 				Submesh *submesh = new Submesh(clone->submeshes[slot][i], transform, uv2_left, uv2_right, uv2_top, uv2_bottom);
 				submeshes[slot].push_back(submesh);
 			}
@@ -96,6 +96,8 @@ namespace LibGens {
 
 				file->goToAddress(submesh_subtable_address);
 				file->readInt32BEA(&address);
+
+				submeshes[slot].reserve(submesh_count);
 				for (size_t i=0; i<submesh_count; i++) {
 					size_t submesh_address=0;
 					file->goToAddress(address + i*4);
@@ -109,6 +111,7 @@ namespace LibGens {
 				}
 			}
 			else {
+				submeshes[slot].reserve(submesh_count);
 				for (size_t i=0; i<submesh_count; i++) {
 					size_t submesh_address=0;
 					file->goToAddress(submesh_table_address + i*4);

@@ -126,6 +126,9 @@ namespace LibGens {
 		file->readInt32BE(&names_count);
 		file->readInt32BEA(&names_address);
 
+		names.reserve(names_count);
+		lights.reserve(names_count);
+
 		for (size_t i=0; i<names_count; i++) {
 			size_t address=0;
 			file->goToAddress(names_address+i*4);

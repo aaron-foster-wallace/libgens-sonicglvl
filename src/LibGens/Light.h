@@ -78,8 +78,16 @@ namespace LibGens {
 				return inner_range;
 			}
 
+			void setInnerRange(float v) {
+				inner_range = v;
+			}
+
 			float getOuterRange() {
 				return outer_range;
+			}
+
+			void setOuterRange(float v) {
+				outer_range = v;
 			}
 	};
 

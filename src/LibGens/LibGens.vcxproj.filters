@@ -183,6 +183,12 @@
     <ClCompile Include="Tags.cpp">
       <Filter>Tags</Filter>
     </ClCompile>
+    <ClCompile Include="MirageNode.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="MirageProperty.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AR.h">
@@ -363,6 +369,12 @@
     </ClInclude>
     <ClInclude Include="Tags.h">
       <Filter>Tags</Filter>
+    </ClInclude>
+    <ClInclude Include="MirageNode.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="MirageProperty.h">
+      <Filter>Common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

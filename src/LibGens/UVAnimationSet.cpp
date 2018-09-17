@@ -33,6 +33,7 @@ namespace LibGens {
 
 		printf("  Animation Set %s: %d Keyframe Sets [%f - %f] FPS: %f\n", animation_name.c_str(), keyframe_sets_count, start_time, end_time, fps);
 
+		keyframe_sets.reserve(keyframe_sets_count);
 		for (size_t i=0; i<keyframe_sets_count; i++) {
 			KeyframeSet *keyframe_set = new KeyframeSet();
 			keyframe_set->read(file, keyframes_buffer);

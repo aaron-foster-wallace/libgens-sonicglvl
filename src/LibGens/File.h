@@ -32,7 +32,9 @@
 #define LIBGENS_FILE_HEADER_ROOT_NODE_ADDRESS           12
 
 #define LIBGENS_FILE_HEADER_ROOT_ADDRESS_DEFAULT        24
-#define LIBGENS_FILE_HEADER_ROOT_ADDRESS_NEXT_GEN       16
+#define LIBGENS_FILE_HEADER_ROOT_ADDRESS_LOST_WORLD     16
+
+#define LIBGENS_FILE_HEADER_ROOT_TYPE_LOST_WORLD        0x0133054A
 
 #define LIBGENS_FILE_STRING_BUFFER                      1024
 
@@ -58,7 +60,7 @@ namespace LibGens {
 			size_t comparison_size;
 		public:
 			File(string filename, string mode);
-			void prepareHeader(int root_type, int root_offset=LIBGENS_FILE_HEADER_ROOT_ADDRESS_DEFAULT);
+			void prepareHeader(int root_type);
 			void writeHeader(bool no_extra_foot=false);
 			void readHeader();
 			void setGlobalOffset(size_t v);
@@ -112,6 +114,8 @@ namespace LibGens {
 			void writeInt32BE(int *dest);
 			void writeInt32BEA(size_t *dest);
 			void writeFloat8(float *dest);
+			void writeFloat16(float *dest);
+			void writeFloat16BE(float *dest);
 			void writeFloat32(float *dest);
 			void writeFloat32BE(float *dest);
 			void writeNull(size_t size);

@@ -29,16 +29,22 @@
 #define LIBGENS_TERRAIN_INSTANCE_AABB_EXPANSION                    0.5f
 
 namespace LibGens {
+	struct Polygon;
+
 	class TerrainInstanceElement {
 		protected:
-			vector<unsigned int> identifiers;
+			vector<unsigned int> light_indices;
 			vector<unsigned short> faces;
 		public:
 			TerrainInstanceElement() {
+				light_indices.clear();
+				faces.clear();
 			}
 
 			void read(File *file);
 			void write(File *file);
+
+			void build(vector<unsigned int> light_indices_p, vector<Polygon> faces_p);
 	};
 
 	class TerrainInstanceSubmesh {
@@ -46,10 +52,15 @@ namespace LibGens {
 			vector<TerrainInstanceElement *> elements;
 		public:
 			TerrainInstanceSubmesh() {
+				elements.clear();
 			}
 
 			void read(File *file);
 			void write(File *file);
+
+			void addElement(TerrainInstanceElement *element) {
+				elements.push_back(element);
+			}
 
 			~TerrainInstanceSubmesh() {
 				for (vector<TerrainInstanceElement *>::iterator it=elements.begin(); it!=elements.end(); it++) {
@@ -63,10 +74,19 @@ namespace LibGens {
 			vector<TerrainInstanceSubmesh *> submeshes[LIBGENS_MODEL_SUBMESH_ROOT_SLOTS];
 		public:
 			TerrainInstanceMesh() {
+				for (int i = 0; i < LIBGENS_MODEL_SUBMESH_ROOT_SLOTS; i++) {
+					submeshes[i].clear();
+				}
 			}
 
 			void read(File *file);
 			void write(File *file);
+
+			void addSubmesh(TerrainInstanceSubmesh *submesh, int slot) {
+				if (slot < LIBGENS_MODEL_SUBMESH_ROOT_SLOTS) {
+					submeshes[slot].push_back(submesh);
+				}
+			}
 
 			~TerrainInstanceMesh() {
 				for (size_t slot=0; slot<LIBGENS_MODEL_SUBMESH_ROOT_SLOTS; slot++) {
@@ -80,6 +100,7 @@ namespace LibGens {
 
 	class Model;
 	class VRMapSample;
+	class LightList;
 
 	class TerrainInstance {
 		protected:
@@ -151,10 +172,16 @@ namespace LibGens {
 				filename = v;
 			}
 
+			void addMesh(TerrainInstanceMesh *mesh) {
+				meshes.push_back(mesh);
+			}
+
 			void setPosition(Vector3 v);
 			void setRotation(Quaternion v);
 
 			void createSamplePoints(list<VRMapSample *> *list, Bitmap *bitmap, float unit_size=1.0f, float saturation_multiplier=1.0f, float brightness_offset=0.0f);
+
+			void buildMeshes(Model *model, LightList *light_list);
 
 			~TerrainInstance();
 	};

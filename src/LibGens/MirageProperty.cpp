@@ -17,36 +17,37 @@
 //    Read AUTHORS.txt, LICENSE.txt and COPYRIGHT.txt for more details.
 //=========================================================================
 
-using namespace std;
+#include "MirageProperty.h"
+#include "MirageNode.h"
 
-#include <stack>
-#include <list>
-#include <set>
-#include <iterator>
-#include <vector>
-#include <string>
-#include <map>
-#include <algorithm>
-#include <ctype.h>
-#include <pthread.h>
-#include "allegro5/allegro.h"
-#include "allegro5/allegro_image.h"
-#if defined(_WIN32) || defined(WIN32)
-#include <fbxsdk.h>
-#include <fbxsdk/fileio/fbxiosettings.h>
-#endif
+namespace LibGens {
+	MirageProperty::MirageProperty(string name_p, unsigned int value_p) {
+		name = name_p;
+		value = value_p;
+	}
 
-// Common Headers only should be pre-compiled
-#include "half/half.h"
-#include "sha1/sha1.h"
-#include "tinyxml/tinyxml.h"
-#include "MathGens.h"
-#include "Bitmap.h"
-#include "Error.h"
-#include "Endian.h"
-#include "File.h"
+	MirageProperty::MirageProperty(MirageNode *mirage_node_p) {
+		name = mirage_node_p->getName();
+		value = mirage_node_p->getValue();
+	}
 
-#undef max
-#undef min
+	string MirageProperty::getName() {
+		return name;
+	}
 
-#include "NvTriStrip/NvTriStrip.h"
+	unsigned int MirageProperty::getValue() {
+		return value;
+	}
+
+	void MirageProperty::setName(string v) {
+		name = v;
+	}
+
+	void MirageProperty::setValue(unsigned int v) {
+		value = v;
+	}
+
+	MirageNode *MirageProperty::toMirageNode() {
+		return new MirageNode( name, value );
+	}
+}

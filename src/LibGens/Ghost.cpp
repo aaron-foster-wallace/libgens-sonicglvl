@@ -43,6 +43,7 @@ namespace LibGens {
 		file->readInt32BE(&animation_total);
 		file->readInt32BE(&node_total);
 
+		animation_names.reserve(animation_total);
 		for (size_t i=0; i<animation_total; i++) {
 			char name[32]="";
 			file->read(name, 32);
@@ -50,6 +51,7 @@ namespace LibGens {
 			animation_names.push_back(animation_name);
 		}
 
+		ghost_nodes.reserve(node_total);
 		for (size_t i=0; i<node_total; i++) {
 			GhostNode *ghost_node = new GhostNode();
 			ghost_node->read(file);

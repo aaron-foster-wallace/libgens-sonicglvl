@@ -490,6 +490,7 @@ namespace LibGens {
 
 		vector<string> instance_names;
 		file->goToAddress(index_table_address);
+		instance_indices.reserve(instance_count);
 		for (size_t i=0; i<instance_count; i++) {
 			unsigned int instance_index=0;
 			file->readInt32BE(&instance_index);
@@ -783,6 +784,9 @@ namespace LibGens {
 		file->readInt32BE(&low_gia_total);
 		file->readInt32BEA(&low_gia_table_address);
 
+		instance_names.reserve(name_total);
+		instance_centers.reserve(name_total);
+		instance_radius.reserve(name_total);
 		for (size_t i=0; i<name_total; i++) {
 			// Names
 			file->goToAddress(name_table_address + i*4);
@@ -811,6 +815,7 @@ namespace LibGens {
 		}
 
 
+		groups.reserve(gia_total);
 		for (size_t i=0; i<gia_total; i++) {
 			file->goToAddress(gia_table_address + i*4);
 			size_t address=0;

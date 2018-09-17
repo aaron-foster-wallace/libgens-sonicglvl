@@ -141,6 +141,8 @@
     <ClCompile Include="MaterialLibrary.cpp" />
     <ClCompile Include="MathGens.cpp" />
     <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="MirageNode.cpp" />
+    <ClCompile Include="MirageProperty.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="ModelLibrary.cpp" />
     <ClCompile Include="Object.cpp" />
@@ -207,6 +209,8 @@
     <ClInclude Include="MaterialLibrary.h" />
     <ClInclude Include="MathGens.h" />
     <ClInclude Include="Mesh.h" />
+    <ClInclude Include="MirageNode.h" />
+    <ClInclude Include="MirageProperty.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="ModelLibrary.h" />
     <ClInclude Include="Object.h" />

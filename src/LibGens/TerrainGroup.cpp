@@ -98,6 +98,7 @@ namespace LibGens {
 		file->readInt32BEA(&model_table_address);
 
 		// Models
+		models.reserve(model_count);
 		for (size_t i=0; i<model_count; i++) {
 			size_t model_address=0;
 			file->goToAddress(model_table_address + i*4);
@@ -125,6 +126,9 @@ namespace LibGens {
 		}
 
 		// Instances
+		instance_centers.reserve(instance_count);
+		instance_radius.reserve(instance_count);
+		instances.reserve(instance_count);
 		for (size_t i=0; i<instance_count; i++) {
 			vector<TerrainInstance *> instances_sub;
 
@@ -141,6 +145,7 @@ namespace LibGens {
 			file->readInt32BEA(&filename_offset_table);
 			file->readInt32BEA(&sphere_address);
 
+			instances_sub.reserve(filename_count);
 			for (size_t j=0; j<filename_count; j++) {
 				size_t instance_name_address=0;
 				string instance_name="";

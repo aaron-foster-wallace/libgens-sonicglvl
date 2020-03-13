@@ -20,6 +20,7 @@
 #include "Bone.h"
 #include "Mesh.h"
 #include "Model.h"
+#include "Morph.h"
 #include "TerrainGroup.h"
 
 namespace LibGens {
@@ -215,10 +216,10 @@ namespace LibGens {
 
 		size_t header_address=file->getCurrentAddress();
 
-		unsigned int unknown_total=0;
-		size_t unknown_address=0;
-		file->readInt32BE(&unknown_total);
-		file->readInt32BEA(&unknown_address);
+		unsigned int morph_set_count=0;
+		size_t morph_sets_address=0;
+		file->readInt32BE(&morph_set_count);
+		file->readInt32BEA(&morph_sets_address);
 
 		unsigned int bone_total=0;
 		size_t bone_definition_table_address=0;
@@ -229,6 +230,17 @@ namespace LibGens {
 		file->readInt32BEA(&bone_definition_table_address);
 		file->readInt32BEA(&bone_matrix_address);
 		file->readInt32BEA(&global_aabb_address);
+
+		for (size_t i = 0; i < morph_set_count; i++) {
+			file->goToAddress(morph_sets_address + i * 4);
+			size_t address = 0;
+			file->readInt32BEA(&address);
+			file->goToAddress(address);
+
+			MorphSet* morph_set = new MorphSet();
+			morph_set->read(file);
+			morph_sets.push_back(morph_set);
+		}
 
 		for (size_t i=0; i<bone_total; i++) {
 			file->goToAddress(bone_definition_table_address + i*4);
@@ -286,7 +298,8 @@ namespace LibGens {
 		size_t model_table_address=0;
 		size_t model_name_address=0;
 
-		size_t unknown_address=0;
+		size_t morph_sets_address=0;
+		unsigned int morph_set_count = morph_sets.size();
 		unsigned int bone_count=bones.size();
 		size_t bone_definition_table_address=0;
 		size_t bone_matrix_address=0;
@@ -300,7 +313,8 @@ namespace LibGens {
 			file->writeInt32BE(&model_flag);
 		}
 		else {
-			file->writeNull(8);
+			file->writeInt32BE(&morph_set_count);
+			file->writeNull(4);
 			file->writeInt32BE(&bone_count);
 			file->writeNull(12);
 		}
@@ -329,7 +343,21 @@ namespace LibGens {
 			file->fixPadding();
 		}
 		else {
-			unknown_address = file->getCurrentAddress();
+			morph_sets_address = file->getCurrentAddress();
+
+			vector<size_t> morph_set_addresses;
+			file->writeNull(morph_set_count * 4);
+
+			for (size_t i = 0; i < morph_set_count; i++) {
+				morph_set_addresses.push_back(file->getCurrentAddress());
+				morph_sets[i]->write(file);
+			}
+
+			for (size_t i = 0; i < morph_set_count; i++) {
+				file->goToAddress(morph_sets_address + i * 4);
+				file->writeInt32BEA(&morph_set_addresses[i]);
+			}
+			file->goToEnd();
 
 			bone_definition_table_address = file->getCurrentAddress();
 			vector<unsigned int> bone_definition_addresses;
@@ -363,7 +391,7 @@ namespace LibGens {
 		}
 		else {
 			file->moveAddress(4);
-			file->writeInt32BEA(&unknown_address);
+			file->writeInt32BEA(&morph_sets_address);
 			file->moveAddress(4);
 			file->writeInt32BEA(&bone_definition_table_address);
 			file->writeInt32BEA(&bone_matrix_address);
@@ -556,6 +584,9 @@ namespace LibGens {
 		for (vector<Mesh *>::iterator it=meshes.begin(); it!=meshes.end(); it++) {
 			(*it)->fixVertexFormatForPC();
 		}
+
+		for (auto it = morph_sets.begin(); it != morph_sets.end(); ++it)
+			(*it)->fixVertexFormatForPC();
 	}
 
 	void Model::buildAABB() {
@@ -617,5 +648,15 @@ namespace LibGens {
 			(*it)->changeVertexFormat(format);
 		}
 	}
+
+    vector<MorphSet*> Model::getMorpherSets()
+    {
+		return morph_sets;
+    }
+
+    void Model::addMorpherSet(MorphSet* morpher_set)
+    {
+		morph_sets.push_back(morpher_set);
+    }
 };
 

@@ -263,6 +263,20 @@ hkpShape *HKWindow::convertMeshToShape(aiMesh *mesh, LibGens::Vector3 scale) {
 	return mopp_shape;
 }
 
+hkpShape* HKWindow::convertMeshToBoxShape(aiMesh* mesh, LibGens::Vector3& center, LibGens::Vector3 scale)
+{
+	LibGens::AABB aabb;
+	aabb.reset();
+
+	for (unsigned int v = 0; v < mesh->mNumVertices; v++) {
+		LibGens::Vector3 vertex(mesh->mVertices[v].x * scale.x, mesh->mVertices[v].y * scale.y, mesh->mVertices[v].z * scale.z);
+		aabb.addPoint(vertex);
+	}
+
+	center = aabb.center();
+	return new hkpBoxShape(hkVector4(aabb.sizeX() / 2, aabb.sizeY() / 2, aabb.sizeZ() / 2));
+}
+
 QList<hkpRigidBody *> HKWindow::convertNodeToRigidBodies(const aiScene *scene, aiNode *node, LibGens::Matrix4 transform) {
 	QList<hkpRigidBody *> rigid_bodies;
 	LibGens::Vector3 pos, sca;
@@ -270,13 +284,17 @@ QList<hkpRigidBody *> HKWindow::convertNodeToRigidBodies(const aiScene *scene, a
 	transform.decomposition(pos, sca, ori);
 
 	for (unsigned int m = 0; m < node->mNumMeshes; m++) {
+		LibGens::Tags tags(node->mName.C_Str());
+
+		LibGens::Vector3 center;
+
 		// Rigid body information.
 		hkpRigidBodyCinfo rigid_body_info;
-		rigid_body_info.m_position.set(pos.x, pos.y, pos.z);
-		rigid_body_info.m_rotation.set(ori.x, ori.y, ori.z, ori.w);
 		rigid_body_info.m_angularDamping = 0.049805f;
 		rigid_body_info.m_linearDamping = 0.0f;
-		hkpShape *shape = convertMeshToShape(scene->mMeshes[node->mMeshes[m]], sca);
+		hkpShape *shape = tags.getTagsByKey("BOX").empty() ? convertMeshToShape(scene->mMeshes[node->mMeshes[m]], sca) : convertMeshToBoxShape(scene->mMeshes[node->mMeshes[m]], center, sca);
+		rigid_body_info.m_position.set(center.x + pos.x, center.y + pos.y, center.z + pos.z);
+		rigid_body_info.m_rotation.set(ori.x, ori.y, ori.z, ori.w);
 		rigid_body_info.m_shape = shape;
 		rigid_body_info.m_mass = 0.0f;
 		rigid_body_info.m_motionType = hkpMotion::MOTION_FIXED;
@@ -285,7 +303,6 @@ QList<hkpRigidBody *> HKWindow::convertNodeToRigidBodies(const aiScene *scene, a
 
 		// Prepare properties.
 		QMap<hkUint32, int> properties;
-		LibGens::Tags tags(node->mName.C_Str());
 		for (int i = 0; i < tags.getTagCount(); i++) {
 			QString tag_match = tags.getTag(i).getKey().c_str();
 

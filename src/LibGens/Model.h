@@ -29,6 +29,7 @@
 
 namespace LibGens {
 	class Mesh;
+	class MorphSet;
 	class Bone;
 	class Vertex;
 	class VRMapSample;
@@ -36,6 +37,7 @@ namespace LibGens {
 	class Model {
 		protected:
 			vector<Mesh *> meshes;
+			vector<MorphSet*> morph_sets;
 			vector<Bone *> bones;
 			string name;
 			unsigned int model_flag;
@@ -76,6 +78,8 @@ namespace LibGens {
 			void mergeModel(Model *model, LibGens::Matrix4 transform, float uv2_left, float uv2_right, float uv2_top, float uv2_bottom);
 			unsigned int getEstimatedMemorySize();
 			void changeVertexFormat(int format);
+			vector<MorphSet*> getMorpherSets();
+			void addMorpherSet(MorphSet* morpher_set);
 			~Model();
 	};
 }

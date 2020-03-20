@@ -7,7 +7,6 @@
 namespace LibGens {
     void Morph::readDescription(File* file) {
         file->readString(&name);
-        printf("%s\n", name.c_str());
     }
 
     void Morph::writeDescription(File* file) {

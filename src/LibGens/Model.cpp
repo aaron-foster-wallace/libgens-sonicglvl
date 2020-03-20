@@ -671,14 +671,13 @@ namespace LibGens {
 
 		properties.push_back(new MirageProperty(name, value));
 	}
-    vector<MorphSet*> Model::getMorpherSets()
-    {
-		return morph_sets;
-    }
 
-    void Model::addMorpherSet(MorphSet* morpher_set)
-    {
+	vector<MorphSet*> Model::getMorphSets() {
+		return morph_sets;
+	}
+
+	void Model::addMorphSet(MorphSet* morpher_set) {
 		morph_sets.push_back(morpher_set);
-    }
+	}
 };
 

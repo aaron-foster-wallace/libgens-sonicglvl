@@ -81,8 +81,8 @@ namespace LibGens {
 			unsigned int getEstimatedMemorySize();
 			void changeVertexFormat(int format);
 			void setPropertyValue(string name, unsigned int value);
-			vector<MorphSet*> getMorpherSets();
-			void addMorpherSet(MorphSet* morpher_set);
+			vector<MorphSet*> getMorphSets();
+			void addMorphSet(MorphSet* morpher_set);
 			~Model();
 	};
 }

@@ -48,5 +48,4 @@ using namespace std;
 
 #undef max
 #undef min
-
-#include "NvTriStrip/NvTriStrip.h"
+#include "tristripper/tri_stripper.h"

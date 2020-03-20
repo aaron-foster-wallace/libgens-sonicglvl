@@ -306,30 +306,35 @@ namespace LibGens {
 			sonic_index_table->flag = 0x4810;
 			object->index_tables.push_back(sonic_index_table);
 
-			vector<unsigned short> indices;
-			indices.reserve(indices_output[split].size());
-
-			for (size_t i=0; i<indices_output[split].size(); i+=3) {
-				indices.push_back(indices_output[split][i]);
-				indices.push_back(indices_output[split][i+1]);
-				indices.push_back(indices_output[split][i+2]);
+			triangle_stripper::indices tri_indices;
+			for (size_t i = 0; i < indices_output[split].size(); i += 3) {
+				tri_indices.push_back(indices_output[split][i]);
+				tri_indices.push_back(indices_output[split][i + 1]);
+				tri_indices.push_back(indices_output[split][i + 2]);
 			}
 
-			SetStitchStrips(false);
-			EnableRestart(false);
+			triangle_stripper::tri_stripper stripper(tri_indices);
+			stripper.SetCacheSize(0);
+			stripper.SetBackwardSearch(false);
+			triangle_stripper::primitive_vector out_vector;
+			stripper.Strip(&out_vector);
 
-			unsigned short numGroups;
-			PrimitiveGroup *groups;
-
-			GenerateStrips(indices.data(), indices.size(), &groups, &numGroups);
-
-			sonic_index_table->strip_sizes.reserve(numGroups);
-			for (unsigned int i = 0; i < numGroups; i++) {
-				sonic_index_table->indices.assign(groups[i].indices, groups[i].indices + groups[i].numIndices);
-				sonic_index_table->strip_sizes.push_back(groups[i].numIndices);
+			for (size_t i = 0; i < out_vector.size(); i += 1) {
+				if (out_vector[i].Type == triangle_stripper::TRIANGLE_STRIP) {
+					for (size_t j = 0; j < out_vector[i].Indices.size(); j++) {
+						sonic_index_table->indices.push_back(out_vector[i].Indices[j]);
+					}
+					sonic_index_table->strip_sizes.push_back(out_vector[i].Indices.size());
+				}
+				else {
+					for (size_t j = 0; j < out_vector[i].Indices.size(); j += 3) {
+						sonic_index_table->indices.push_back(out_vector[i].Indices[j]);
+						sonic_index_table->indices.push_back(out_vector[i].Indices[j + 1]);
+						sonic_index_table->indices.push_back(out_vector[i].Indices[j + 2]);
+						sonic_index_table->strip_sizes.push_back(3);
+					}
+				}
 			}
-
-			delete[] groups;
 
 			SonicSubmesh *sonic_submesh=new SonicSubmesh();
 			sonic_submesh->node_index   = 0x36;

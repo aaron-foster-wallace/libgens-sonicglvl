@@ -42,8 +42,15 @@
     <ClCompile Include="tinyxml\tinyxmlparser.cpp">
       <Filter>Externals\tinyxml</Filter>
     </ClCompile>
-    <ClCompile Include="NvTriStrip\NvTriStrip.cpp" />
-    <ClCompile Include="NvTriStrip\NvTriStripObjects.cpp" />
+    <ClCompile Include="tristripper\connectivity_graph.cpp">
+      <Filter>Externals\tristripper</Filter>
+    </ClCompile>
+    <ClCompile Include="tristripper\policy.cpp">
+      <Filter>Externals\tristripper</Filter>
+    </ClCompile>
+    <ClCompile Include="tristripper\tri_stripper.cpp">
+      <Filter>Externals\tristripper</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="half\half.h">
@@ -58,8 +65,29 @@
     <ClInclude Include="tinyxml\tinyxml.h">
       <Filter>Externals\tinyxml</Filter>
     </ClInclude>
-    <ClInclude Include="NvTriStrip\VertexCache.h" />
-    <ClInclude Include="NvTriStrip\NvTriStrip.h" />
-    <ClInclude Include="NvTriStrip\NvTriStripObjects.h" />
+    <ClInclude Include="tristripper\public_types.h">
+      <Filter>Externals\tristripper</Filter>
+    </ClInclude>
+    <ClInclude Include="tristripper\tri_stripper.h">
+      <Filter>Externals\tristripper</Filter>
+    </ClInclude>
+    <ClInclude Include="tristripper\detail\types.h">
+      <Filter>Externals\tristripper\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="tristripper\detail\cache_simulator.h">
+      <Filter>Externals\tristripper\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="tristripper\detail\connectivity_graph.h">
+      <Filter>Externals\tristripper\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="tristripper\detail\graph_array.h">
+      <Filter>Externals\tristripper\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="tristripper\detail\heap_array.h">
+      <Filter>Externals\tristripper\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="tristripper\detail\policy.h">
+      <Filter>Externals\tristripper\detail</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

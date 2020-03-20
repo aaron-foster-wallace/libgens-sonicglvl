@@ -158,7 +158,20 @@ namespace LibGens {
 		}
 	}
 
-	GITextureGroupInfo::GITextureGroupInfo() {
+    void GITextureGroupInfo::saveMipLevelLimitFile(string filename, bool limitLevel0, bool limitLevel1, bool limitLevel2) {
+		File file(filename, LIBGENS_FILE_WRITE_BINARY);
+		if (file.valid()) {
+			file.prepareHeader(0);
+			file.writeUChar((unsigned char*)&limitLevel0);
+			file.writeUChar((unsigned char*)&limitLevel1);
+			file.writeUChar((unsigned char*)&limitLevel2);
+			file.fixPadding();
+			file.writeHeader();
+			file.close();
+		}
+    }
+
+    GITextureGroupInfo::GITextureGroupInfo() {
 
 	}
 

@@ -298,7 +298,7 @@ void HCWindow::addSourceModelsTriggered() {
 	QString extensions_str = "All supported formats (";
 	foreach(QString extension, extensions)
 		extensions_str += extension + " ";
-	extensions_str += ");;";
+	extensions_str += "*.terrain-model *.terrain-instanceinfo *.light);;";
 
 	// Specific filters
 	foreach(QString extension, extensions) {
@@ -308,9 +308,7 @@ void HCWindow::addSourceModelsTriggered() {
 			extensions_str += QString("%1 (%2);;").arg(description->mName).arg(extension);
 		}
 	}
-
-	// Remove the last two ;;
-	extensions_str.remove(extensions_str.size() - 3, 2);
+	extensions_str += "Terrain Model (*.terrain-model);;Terrain Instance Info (*.terrain-instanceinfo);;Light (*.light)";
 
 	QFileDialog dialog(this);
     dialog.setFileMode(QFileDialog::ExistingFiles);

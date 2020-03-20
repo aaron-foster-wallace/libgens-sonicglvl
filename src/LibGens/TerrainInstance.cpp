@@ -597,6 +597,9 @@ namespace LibGens {
 			}
 		}
 
+		for (auto it = this->meshes.begin(); it != this->meshes.end(); ++it)
+			delete *it;
+
 		this->meshes.clear();
 
 		AABB aabb = model->getAABB();

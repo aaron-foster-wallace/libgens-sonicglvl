@@ -7,7 +7,7 @@ void EditorApplication::openMultiSetParamDlg()
 {
 	if (!hMultiSetParamDlg)
 	{
-		hMultiSetParamDlg = CreateDialog(NULL, MAKEINTRESOURCE(131), NULL, MultiSetParamCallback);
+		hMultiSetParamDlg = CreateDialog(NULL, MAKEINTRESOURCE(131), hwnd, MultiSetParamCallback);
 
 		SendDlgItemMessage(hMultiSetParamDlg, IDR_MULTISETPARAM_MSP, BM_SETCHECK, (WPARAM)(cloning_mode == SONICGLVL_MULTISETPARAM_MODE_MSP), 0);
 		SendDlgItemMessage(hMultiSetParamDlg, IDR_MULTISETPARAM_CLONE, BM_SETCHECK, (WPARAM)(cloning_mode == SONICGLVL_MULTISETPARAM_MODE_CLONE), 0);
@@ -41,19 +41,21 @@ void EditorApplication::clearMultiSetParamDlg()
 
 void EditorApplication::createMultiSetParamObjects()
 {
-	if (selected_nodes.size() < 1)
+	float spacing = 0, count = 0;
+	float vec_x = 0, vec_y = 0, vec_z = 0;
+
+	spacing = GetDlgItemFloat(hMultiSetParamDlg, IDE_MULTISETPARAM_SPACING);
+	count = GetDlgItemInt(hMultiSetParamDlg, IDE_MULTISETPARAM_COUNT, NULL, TRUE);
+
+	if (count < 1 || selected_nodes.size() < 1)
+	{
+		deleteTemporaryNodes();
 		return;
+	}
 
-	float spacing = GetDlgItemFloat(hMultiSetParamDlg, IDE_MULTISETPARAM_SPACING);
-	int count = GetDlgItemInt(hMultiSetParamDlg, IDE_MULTISETPARAM_COUNT, NULL, TRUE);
-
-	if (count < 1)
-		return;
-
-	float vec_x = GetDlgItemFloat(hMultiSetParamDlg, IDE_MULTISETPARAM_X);
-	float vec_y = GetDlgItemFloat(hMultiSetParamDlg, IDE_MULTISETPARAM_Y);
-	float vec_z = GetDlgItemFloat(hMultiSetParamDlg, IDE_MULTISETPARAM_Z);
-
+	vec_x = GetDlgItemFloat(hMultiSetParamDlg, IDE_MULTISETPARAM_X);
+	vec_y = GetDlgItemFloat(hMultiSetParamDlg, IDE_MULTISETPARAM_Y);
+	vec_z = GetDlgItemFloat(hMultiSetParamDlg, IDE_MULTISETPARAM_Z);
 	LibGens::Vector3 pos_vector(vec_x, vec_y, vec_z);
 
 	list<EditorNode*>::iterator it;
@@ -110,9 +112,9 @@ void EditorApplication::createMultiSetParamObjects()
 					obj->getMultiSetParam()->addNode(msp_node);
 				}
 
-				// reload object and its instances
-				object_node_manager->deleteObjectNode(obj);
-				object_node_manager->createObjectNode(obj);
+				obj_node->createObjectMultiSetNodes(obj, scene_manager);
+				obj_node->clearNames();
+				object_node_manager->reloadObjectNode(obj);
 			}
 		}
 	}
@@ -200,11 +202,14 @@ void EditorApplication::deleteTemporaryNodes()
 					object_set->eraseObject(object);
 				}
 
-				object_node_manager->hideObjectNode(object, true);
 				(*it)->setSelect(false);
+				object_node_manager->deleteObjectNode(object);
+				delete object;
 			}
 		}
 	}
+
+	temporary_nodes.clear();
 }
 
 INT_PTR CALLBACK MultiSetParamCallback(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -245,6 +250,25 @@ INT_PTR CALLBACK MultiSetParamCallback(HWND hDlg, UINT msg, WPARAM wParam, LPARA
 		case IDB_MULTISETPARAM_CLEAR:
 			editor_application->clearMultiSetParamDlg();
 			break;
+		}
+		break;
+		
+	case WM_NOTIFY:
+		if (LOWORD(wParam) == IDS_MULTISETPARAM_COUNT)
+		{
+			if (((LPNMUPDOWN)lParam)->hdr.code == UDN_DELTAPOS)
+			{
+				int delta = (LPNMUPDOWN(lParam))->iDelta;
+				int count = GetDlgItemFloat(hDlg, IDE_MULTISETPARAM_COUNT);
+
+				if (delta > 1) delta = 1;
+				if (delta < -1) delta = -1;
+
+				count += -delta;
+				if (count < 1) 	count = 0;
+
+				SetDlgItemText(hDlg, IDE_MULTISETPARAM_COUNT, ToString<int>(count).c_str());
+			}
 		}
 		break;
 	}

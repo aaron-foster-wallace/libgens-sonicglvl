@@ -41,9 +41,9 @@ LRESULT APIENTRY SubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 				case IMD_OPEN_LEVEL :
 					editor_application->openLevelGUI();
 					break;
-				case IMD_OPEN_LOST_WORLD_LEVEL :
-					editor_application->openLostWorldLevelGUI();
-					break;
+				//case IMD_OPEN_LOST_WORLD_LEVEL :
+					//editor_application->openLostWorldLevelGUI();
+					//break;
 				case IMD_SAVE_LEVEL_DATA :
 					editor_application->saveLevelDataGUI();
 					break;
@@ -52,6 +52,36 @@ LRESULT APIENTRY SubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 					break;
 				case IMD_EXPORT_SCENE_FBX :
 					editor_application->exportSceneFBXGUI();
+					break;
+
+				// Edit
+				case IMD_UNDO:
+					editor_application->undoHistory();
+					break;
+				case IMD_REDO:
+					editor_application->redoHistory();
+					break;
+				case IMD_CUT:
+					editor_application->copySelection();
+					editor_application->deleteSelection();
+					break;
+				case IMD_COPY:
+					editor_application->copySelection();
+					break;
+				case IMD_PASTE:
+					editor_application->pasteSelection();
+					break;
+				case IMD_DELETE:
+					editor_application->deleteSelection();
+					break;
+				case IMD_CLEAR_SELECTION:
+					editor_application->clearSelection();
+					break;
+				case IMD_SELECT_ALL:
+					editor_application->selectAll();
+					break;
+				case IMD_FIND:
+					editor_application->openFindGUI();
 					break;
 
 				// Physics
@@ -107,6 +137,12 @@ LRESULT APIENTRY SubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 					break;
 				case IMD_PLACEMENT_SNAP:
 					editor_application->togglePlacementSnap();
+					break;
+				case IMD_LOCAL_ROTATION:
+					editor_application->toggleLocalRotation();
+					break;
+				case IMD_ROTATION_SNAP:
+					editor_application->toggleRotationSnap();
 					break;
 			}
 			break;

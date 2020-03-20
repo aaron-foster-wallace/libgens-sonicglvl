@@ -138,6 +138,7 @@ class EditorApplication : public BaseApplication {
 		// General Editor Variables
 		Ogre::uint32 editor_mode;
 		bool world_transform;
+		bool local_rotation;
 		size_t dragging_mode;
 		size_t cloning_mode;
 		Ogre::AnimationState *animation_state;
@@ -146,6 +147,17 @@ class EditorApplication : public BaseApplication {
 		string current_level_filename;
 		map<LibGens::ObjectSet *, int> set_indices;
 		map<LibGens::ObjectSet *, bool> set_visibility;
+
+		int current_vector_list_selection;
+		int last_vector_list_selection;
+		int current_id_list_selection;
+		int last_id_list_selection;
+		bool is_update_vector_list;
+		bool is_pick_target;
+		bool is_update_pos_rot;
+
+		// Finder
+		list<ObjectNode*>::iterator find_position;
 		
 		// Ogre
 		Ogre::Light *global_directional_light;
@@ -221,7 +233,7 @@ class EditorApplication : public BaseApplication {
 		HWND hPhysicsEditorDlg;
 		HWND hMaterialEditorPreviewDlg;
 		HWND hMultiSetParamDlg;
-
+		HWND hFindObjectDlg;
 		// Object Palette
 		int current_category_index;
 		LibGens::Object *last_palette_selection;
@@ -234,6 +246,8 @@ class EditorApplication : public BaseApplication {
 		list<LibGens::Object *> current_object_list_properties;
 		vector<string> current_properties_names;
 		vector<LibGens::ObjectElementType> current_properties_types;
+		vector<LibGens::Vector3> temp_property_vector_list;
+		vector<unsigned int> temp_property_id_list;
 		int current_property_index;
 		LibGens::Object *current_single_property_object;
 
@@ -302,6 +316,7 @@ class EditorApplication : public BaseApplication {
 		void deleteSelection();
 		void clearSelection();
 		void cloneSelection();
+		void temporaryCloneSelection();
 		void showSelectionNames();
 		void selectAll();
 		void translateSelection(Ogre::Vector3 v);
@@ -311,10 +326,19 @@ class EditorApplication : public BaseApplication {
 		void makeHistorySelection(bool mode);
 		void toggleWorldTransform();
 		void togglePlacementSnap();
+		void toggleLocalRotation();
+		void toggleRotationSnap();
+		void toggleTranslationSnap();
 		void updateNodeVisibility();
 		void toggleNodeVisibility(unsigned int flag);
 		void updateVisibilityGUI();
 		void rememberCloningNodes();
+		bool isUpdatePosRot();
+
+		void openFindGUI();
+		void closeFindGUI();
+		void findNext(string obj_name, string param, string value);
+		void findAll(string obj_name, string param, string value);
 
 		void copySelection();
 		void pasteSelection();
@@ -435,14 +459,32 @@ class EditorApplication : public BaseApplication {
 		void updateEditPropertyID(size_t v);
 		void updateEditPropertyIDList(vector<size_t> v);
 		void updateEditPropertyVector(LibGens::Vector3 v);
-		void updateEditPropertyVectorFocus();
-		void updateEditPropertyVectorGUI();
-		void updateEditPropertyVectorMode(bool mode_state);
+		void updateEditPropertyVectorFocus(int index = 0);
+		void updateEditPropertyVectorGUI(int index = 0, bool is_list = false);
+		void updateEditPropertyVectorMode(bool mode_state, bool is_list = false, int index = 0);
 		void updateEditPropertyVectorList(vector<LibGens::Vector3> v);
-		void updateEditPropertyVectorListFocus();
+		void selectNode(EditorNode* node);
+		void openQueryTargetMode(bool mode);
+		void setTargetName(size_t id, bool is_list = false);
+		void addVectorToList(LibGens::Vector3 = LibGens::Vector3(0, 0, 0));
+		void updateVectorListSelection(int index);
+		void removeVectorFromList(int index);
+		void moveVector(int index, bool up);
+		bool isVectorListSelectionValid();
+		bool isUpdateVectorList();
+		void addIDToList(size_t id);
+		void updateIDListSelection(int index);
+		void removeIDFromList(int index);
+		void moveID(int index, bool up);
+		bool isIDListSelectionValid();
+		vector<size_t>& getCurrentPropertyIDList();
+		vector<LibGens::Vector3>& getCurrentPropertyVectorList();
+		vector<VectorNode*>& getPropertyVectorNodes();
+		ObjectNodeManager* getObjectNodeManager();
 
 
 		void closeVectorQueryMode();
+		void closeTargetQueryMode();
 
 		void verifySonicSpawnChange();
 		void confirmEditProperty();

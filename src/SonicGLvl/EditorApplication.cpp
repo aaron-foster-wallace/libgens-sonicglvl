@@ -33,12 +33,25 @@ EditorApplication::EditorApplication(void)
 {
 	hLeftDlg = NULL;
 	hBottomDlg = NULL;
-	hMultiSetParamDlg = NULL;
-	cloning_mode = SONICGLVL_MULTISETPARAM_MODE_CLONE;
 }
 
 EditorApplication::~EditorApplication(void) {
 
+}
+
+ObjectNodeManager* EditorApplication::getObjectNodeManager()
+{
+	return object_node_manager;
+}
+
+void EditorApplication::selectNode(EditorNode* node)
+{
+	if (node)
+	{
+		node->setSelect(true);
+		selected_nodes.push_back(node);
+		viewport->focusOnPoint(node->getPosition());
+	}
 }
 
 void EditorApplication::updateSelection() {
@@ -160,7 +173,7 @@ void EditorApplication::selectAll() {
 	if (editor_mode == EDITOR_NODE_QUERY_OBJECT) {
 		list<ObjectNode *> object_nodes = object_node_manager->getObjectNodes();
 		for (list<ObjectNode *>::iterator it=object_nodes.begin(); it!=object_nodes.end(); it++) {
-			if (!(*it)->isSelected()) {
+			if (!(*it)->isSelected() && !(*it)->isForceHidden()) {
 				stuff_selected = true;
 				HistoryActionSelectNode *action_select = new HistoryActionSelectNode((*it), false, true, &selected_nodes);
 				(*it)->setSelect(true);
@@ -236,6 +249,45 @@ void EditorApplication::cloneSelection() {
 	updateSelection();
 }
 
+void EditorApplication::temporaryCloneSelection() {
+	if (!selected_nodes.size()) return;
+
+	list<EditorNode*> nodes_to_clone = selected_nodes;
+	clearSelection();
+
+	for (list<EditorNode*>::iterator it = nodes_to_clone.begin(); it != nodes_to_clone.end(); it++) {
+		// Cast to appropiate types depending on the type of editor node
+		if ((*it)->getType() == EDITOR_NODE_OBJECT) {
+			ObjectNode* object_node = static_cast<ObjectNode*>(*it);
+
+			LibGens::Object* object = object_node->getObject();
+			if (object) {
+				LibGens::Object* new_object = new LibGens::Object(object);
+
+				if (current_level) {
+					if (current_level->getLevel()) {
+						new_object->setID(current_level->getLevel()->newObjectID());
+					}
+				}
+
+				LibGens::ObjectSet* parent_set = object->getParentSet();
+				if (parent_set) {
+					parent_set->addObject(new_object);
+				}
+
+				// Create
+				ObjectNode* new_object_node = object_node_manager->createObjectNode(new_object);
+
+				// Add to current selection
+				new_object_node->setSelect(true);
+				selected_nodes.push_back(new_object_node);
+			}
+		}
+	}
+
+	updateSelection();
+}
+
 void EditorApplication::translateSelection(Ogre::Vector3 v) {
 	for (list<EditorNode *>::iterator it=selected_nodes.begin(); it!=selected_nodes.end(); it++) {
 		(*it)->translate(v);
@@ -244,9 +296,10 @@ void EditorApplication::translateSelection(Ogre::Vector3 v) {
 
 
 void EditorApplication::rotateSelection(Ogre::Quaternion q) {
-	if (selected_nodes.size() == 1) {
-		EditorNode *node = *selected_nodes.begin();
-		node->rotate(q);
+	if (selected_nodes.size() == 1 || local_rotation) {
+		for (list<EditorNode*>::iterator it = selected_nodes.begin(); it != selected_nodes.end(); ++it) {
+			(*it)->rotate(q);
+		}
 		//node->setRotation(q);
 	}
 	else {
@@ -285,13 +338,18 @@ void EditorApplication::rememberSelection(bool mode) {
 
 void EditorApplication::makeHistorySelection(bool mode) {
 	HistoryActionWrapper *wrapper = new HistoryActionWrapper();
+	int index = 0;
+	bool is_list = current_properties_types[current_property_index] == LibGens::OBJECT_ELEMENT_VECTOR_LIST;
 	for (list<EditorNode *>::iterator it=selected_nodes.begin(); it!=selected_nodes.end(); it++) {
 		if (!mode) {
 			HistoryActionMoveNode *action = new HistoryActionMoveNode((*it), (*it)->getLastPosition(), (*it)->getPosition());
 			wrapper->push(action);
-
 			if (editor_mode == EDITOR_NODE_QUERY_VECTOR) {
-				updateEditPropertyVectorGUI();
+				VectorNode* vector_node = static_cast<VectorNode*>(*it);
+				while (property_vector_nodes[index] != vector_node)
+					++index;
+
+				updateEditPropertyVectorGUI(index, is_list);
 			}
 		}
 		else {
@@ -313,6 +371,19 @@ void EditorApplication::makeHistorySelection(bool mode) {
 				wrapper->push(sub_wrapper);
 			}
 		}
+		index = 0;
+	}
+
+	if (is_list && editor_mode == EDITOR_NODE_QUERY_VECTOR)
+	{
+		updateEditPropertyVectorList(temp_property_vector_list);
+		if (hEditPropertyDlg && isVectorListSelectionValid())
+		{
+			Ogre::Vector3 v = property_vector_nodes[current_vector_list_selection]->getPosition();
+			SetDlgItemText(hEditPropertyDlg, IDE_EDIT_VECTOR_LIST_X, ToString<float>(v.x).c_str());
+			SetDlgItemText(hEditPropertyDlg, IDE_EDIT_VECTOR_LIST_Y, ToString<float>(v.y).c_str());
+			SetDlgItemText(hEditPropertyDlg, IDE_EDIT_VECTOR_LIST_Z, ToString<float>(v.z).c_str());
+		}
 	}
 	pushHistory(wrapper);
 }
@@ -321,17 +392,44 @@ void EditorApplication::makeHistorySelection(bool mode) {
 void EditorApplication::undoHistory() {
 	if (editor_mode == EDITOR_NODE_QUERY_VECTOR) {
 		property_vector_history->undo();
-		updateEditPropertyVectorGUI();
+		bool is_list = current_properties_types[current_property_index] == LibGens::OBJECT_ELEMENT_VECTOR_LIST;
+
+		for (int index = 0; index < property_vector_nodes.size(); ++index)
+			updateEditPropertyVectorGUI(index, is_list);
+		if (is_list)
+		{
+			updateEditPropertyVectorList(temp_property_vector_list);
+			if (hEditPropertyDlg && isVectorListSelectionValid())
+			{
+				Ogre::Vector3 v = property_vector_nodes[current_vector_list_selection]->getPosition();
+				SetDlgItemText(hEditPropertyDlg, IDE_EDIT_VECTOR_LIST_X, ToString<float>(v.x).c_str());
+				SetDlgItemText(hEditPropertyDlg, IDE_EDIT_VECTOR_LIST_Y, ToString<float>(v.y).c_str());
+				SetDlgItemText(hEditPropertyDlg, IDE_EDIT_VECTOR_LIST_Z, ToString<float>(v.z).c_str());
+			}
+		}
 	}
 	else history->undo();
-	
 }
 
 
 void EditorApplication::redoHistory() {
 	if (editor_mode == EDITOR_NODE_QUERY_VECTOR) {
 		property_vector_history->redo();
-		updateEditPropertyVectorGUI();
+		bool is_list = current_properties_types[current_property_index] == LibGens::OBJECT_ELEMENT_VECTOR_LIST;
+
+		for (int index = 0; index < property_vector_nodes.size(); ++index)
+			updateEditPropertyVectorGUI(index, is_list);
+		if (is_list)
+		{
+			updateEditPropertyVectorList(temp_property_vector_list);
+			if (hEditPropertyDlg && isVectorListSelectionValid())
+			{
+				Ogre::Vector3 v = property_vector_nodes[current_vector_list_selection]->getPosition();
+				SetDlgItemText(hEditPropertyDlg, IDE_EDIT_VECTOR_LIST_X, ToString<float>(v.x).c_str());
+				SetDlgItemText(hEditPropertyDlg, IDE_EDIT_VECTOR_LIST_Y, ToString<float>(v.y).c_str());
+				SetDlgItemText(hEditPropertyDlg, IDE_EDIT_VECTOR_LIST_Z, ToString<float>(v.z).c_str());
+			}
+		}
 	}
 	else history->redo();
 }
@@ -370,6 +468,39 @@ void EditorApplication::togglePlacementSnap() {
 
 	if (hViewSubMenu) {
 		CheckMenuItem(hViewSubMenu, IMD_PLACEMENT_SNAP, ((placement_grid_snap > 0.0f) ? MF_CHECKED : MF_UNCHECKED));
+	}
+}
+
+void EditorApplication::toggleLocalRotation() {
+	local_rotation = !local_rotation;
+
+	const int viewMenuPos = 2;
+	HMENU hViewSubMenu = GetSubMenu(hMenu, viewMenuPos);
+
+	if (hViewSubMenu) {
+		CheckMenuItem(hViewSubMenu, IMD_LOCAL_ROTATION, (local_rotation ? MF_CHECKED : MF_UNCHECKED));
+	}
+}
+
+void EditorApplication::toggleRotationSnap() {
+	axis->setRotationSnap(!axis->isRotationSnap());
+
+	const int viewMenuPos = 2;
+	HMENU hViewSubMenu = GetSubMenu(hMenu, viewMenuPos);
+
+	if (hViewSubMenu) {
+		CheckMenuItem(hViewSubMenu, IMD_ROTATION_SNAP, (axis->isRotationSnap() ? MF_CHECKED : MF_UNCHECKED));
+	}
+}
+
+void EditorApplication::toggleTranslationSnap() {
+	axis->setTranslationSnap(!axis->isTranslationSnap());
+
+	const int viewMenuPos = 2;
+	HMENU hViewSubMenu = GetSubMenu(hMenu, viewMenuPos);
+
+	if (hViewSubMenu) {
+		CheckMenuItem(hViewSubMenu, IMD_TRANSLATION_SNAP, (axis->isTranslationSnap() ? MF_CHECKED : MF_UNCHECKED));
 	}
 }
 
@@ -414,6 +545,8 @@ void EditorApplication::createScene(void) {
 	hEditPropertyDlg = NULL;
 	hMaterialEditorDlg = NULL;
 	hPhysicsEditorDlg = NULL;
+	hMultiSetParamDlg = NULL;
+	hFindObjectDlg = NULL;
 	
 	updateVisibilityGUI();
 	updateObjectCategoriesGUI();
@@ -428,6 +561,8 @@ void EditorApplication::createScene(void) {
 	current_set                = NULL;
 	current_single_property_object = NULL;
 	history_edit_property_wrapper = NULL;
+	cloning_mode = SONICGLVL_MULTISETPARAM_MODE_CLONE;
+	is_pick_target = false;
 
 	// Set up Scene Managers
 	scene_manager = root->createSceneManager("OctreeSceneManager");
@@ -627,6 +762,11 @@ bool EditorApplication::keyPressed(const OIS::KeyEvent &arg) {
 		if (editor_mode == EDITOR_NODE_QUERY_NODE) {
 			closeVectorQueryMode();
 		}
+
+		if (is_pick_target)
+		{
+			openQueryTargetMode(false);
+		}
 	}
 
 	// Regular Mode Shorcuts
@@ -658,9 +798,8 @@ bool EditorApplication::keyPressed(const OIS::KeyEvent &arg) {
 			}
 
 			if(arg.key == OIS::KC_F) {
-				if (camera_manager) {
-					camera_manager->setForceCamera(!camera_manager->getForceCamera());
-				}
+				if (!hFindObjectDlg)
+					openFindGUI();
 			}
 
 			if(arg.key == OIS::KC_D) {
@@ -714,6 +853,14 @@ bool EditorApplication::keyPressed(const OIS::KeyEvent &arg) {
 
 				clearSelection();
 				editor_mode = (editor_mode == EDITOR_NODE_QUERY_GHOST ? EDITOR_NODE_QUERY_OBJECT : EDITOR_NODE_QUERY_GHOST);
+			}
+		}
+		else if (keyboard->isModifierDown(OIS::Keyboard::Alt))
+		{
+			if (arg.key == OIS::KC_F) {
+				if (camera_manager) {
+					camera_manager->setForceCamera(!camera_manager->getForceCamera());
+				}
 			}
 		}
 	}
@@ -873,10 +1020,10 @@ bool EditorApplication::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButto
 			if (axis->mousePressed(viewport, arg, id)) {
 				dragging_mode = 0;
 
-				if (keyboard->isModifierDown(OIS::Keyboard::Shift)) {
+				if (keyboard->isModifierDown(OIS::Keyboard::Shift) && !hMultiSetParamDlg) {
 					dragging_mode = 1;
 					rememberCloningNodes();
-					cloneSelection();
+					temporaryCloneSelection();
 				}
 
 				if (keyboard->isModifierDown(OIS::Keyboard::Ctrl)) {
@@ -888,17 +1035,35 @@ bool EditorApplication::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButto
 			}
 			else if (id == OIS::MB_Left) {
 				if (current_node) {
-					if (!current_node->isSelected()) {
+					if (!is_pick_target) {
 						if (!keyboard->isModifierDown(OIS::Keyboard::Ctrl)) {
 							clearSelection();
 						}
 
-						HistoryActionSelectNode *action_select = new HistoryActionSelectNode(current_node, false, true, &selected_nodes);
-						current_node->setSelect(true);
-						selected_nodes.push_back(current_node);
-						pushHistory(action_select);
-						
+						if (!current_node->isSelected())
+						{
+							HistoryActionSelectNode* action_select = new HistoryActionSelectNode(current_node, false, true, &selected_nodes);
+							current_node->setSelect(true);
+							selected_nodes.push_back(current_node);
+							pushHistory(action_select);
+
+						}
+
 						updateSelection();
+					}
+					else
+					{
+						if (current_node->getType() == EDITOR_NODE_OBJECT)
+						{
+							ObjectNode* object_node = static_cast<ObjectNode*>(current_node);
+							size_t id = object_node->getObject()->getID();
+
+							bool is_list = current_properties_types[current_property_index] == LibGens::OBJECT_ELEMENT_ID_LIST;
+							int combo_box = is_list ? IDE_EDIT_ID_LIST_VALUE : IDC_EDIT_ID_VALUE;
+							SetDlgItemText(hEditPropertyDlg, combo_box, ToString<size_t>(id).c_str());
+
+							setTargetName(id, is_list);
+						}
 					}
 				}
 				else if (!current_node) {
@@ -950,12 +1115,13 @@ bool EditorApplication::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButto
 bool EditorApplication::mouseReleased(const OIS::MouseEvent &arg, OIS::MouseButtonID id) {
 	if (id == OIS::MB_Left) {
 		if (axis->mouseReleased(arg, id)) {
-			makeHistorySelection(axis->getMode());
+			if (dragging_mode != 1)
+				makeHistorySelection(axis->getMode());
 		}
 
 		if (dragging_mode == 1)
 		{
-			if (cloning_nodes.size())
+			if (cloning_nodes.size() && !hMultiSetParamDlg)
 			{
 				openMultiSetParamDlg();
 				setVectorAndSpacing();

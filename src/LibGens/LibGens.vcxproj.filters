@@ -189,6 +189,9 @@
     <ClCompile Include="MirageProperty.cpp">
       <Filter>Common</Filter>
     </ClCompile>
+    <ClCompile Include="Morph.cpp">
+      <Filter>Model</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AR.h">
@@ -375,6 +378,8 @@
     </ClInclude>
     <ClInclude Include="MirageProperty.h">
       <Filter>Common</Filter>
+    <ClInclude Include="Morph.h">
+      <Filter>Model</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

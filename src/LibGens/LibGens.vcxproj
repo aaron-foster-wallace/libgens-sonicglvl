@@ -145,6 +145,7 @@
     <ClCompile Include="MirageProperty.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="ModelLibrary.cpp" />
+    <ClCompile Include="Morph.cpp" />
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="ObjectCategory.cpp" />
     <ClCompile Include="ObjectElement.cpp" />
@@ -213,6 +214,7 @@
     <ClInclude Include="MirageProperty.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="ModelLibrary.h" />
+    <ClInclude Include="Morph.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="ObjectCategory.h" />
     <ClInclude Include="ObjectElement.h" />

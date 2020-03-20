@@ -71,11 +71,13 @@ namespace LibGens {
 			bool hasExtra();
 			string getMaterialName();
 			void setMaterialName(string v);
+			VertexFormat* getVertexFormat();
 			void setVertexFormat(VertexFormat *v);
 			void createSamplePoints(list<VRMapSample *> *list, Matrix4 &matrix, Bitmap *bitmap, float unit_size=1.0f, float saturation_multiplier=1.0f, float brightness_offset=0.0f);
 			void addBone(unsigned char bone);
 			unsigned char getBone(unsigned int index);
 			vector<unsigned char> getBoneTable();
+			void clearBoneTable();
 			void build(vector<Vertex *> vertices_p, vector<Polygon> faces_vectors_p);
 			void fixVertexFormatForPC();
 			void addTextureUnit(string v);

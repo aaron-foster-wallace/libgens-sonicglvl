@@ -470,7 +470,11 @@ namespace LibGens {
 		material_name = v;
 	}
 
-	void Submesh::setVertexFormat(VertexFormat *v) {
+    VertexFormat* Submesh::getVertexFormat() {
+		return vertex_format;
+    }
+
+    void Submesh::setVertexFormat(VertexFormat *v) {
 		vertex_format = v;
 	}
 
@@ -486,7 +490,11 @@ namespace LibGens {
 		return bone_table;
 	}
 
-	void Submesh::addTextureUnit(string v) {
+    void Submesh::clearBoneTable() {
+		bone_table.clear();
+    }
+
+    void Submesh::addTextureUnit(string v) {
 		texture_units.push_back(v);
 	}
 

@@ -86,6 +86,10 @@
 #define SONICGLVL_MATERIAL_EDITOR_MODE_MATERIAL  1
 #define SONICGLVL_MATERIAL_EDITOR_MODE_TERRAIN   2
 
+#define SONICGLVL_MULTISETPARAM_MODE_CLONE		 0
+#define SONICGLVL_MULTISETPARAM_MODE_MSP		 1
+#define SONICGLVL_MULTISETPARAM_MODE_MSP_ADD	 2
+
 extern int global_cursor_state;
 
 extern Ogre::SceneNode *camera_marker_node;
@@ -135,6 +139,7 @@ class EditorApplication : public BaseApplication {
 		Ogre::uint32 editor_mode;
 		bool world_transform;
 		size_t dragging_mode;
+		size_t cloning_mode;
 		Ogre::AnimationState *animation_state;
 		EditorLevelDatabase *level_database;
 		EditorLevel *current_level;
@@ -215,6 +220,7 @@ class EditorApplication : public BaseApplication {
 		HWND hMaterialEditorDlg;
 		HWND hPhysicsEditorDlg;
 		HWND hMaterialEditorPreviewDlg;
+		HWND hMultiSetParamDlg;
 
 		// Object Palette
 		int current_category_index;
@@ -240,10 +246,14 @@ class EditorApplication : public BaseApplication {
 
 		// Material Editor
 		size_t material_editor_mode;
+		string material_editor_mesh_group;
 		int material_editor_list_selection;
 		int last_material_editor_list_selection;
+		int texture_list_selection;
+		int last_texture_list_selection;
 		LibGens::Model *material_editor_model;
 		string material_editor_model_filename;
+		string material_editor_library_folder;
 		vector<LibGens::Material *> material_editor_materials;
 		Ogre::RenderWindow *material_editor_preview_window;
 		Ogre::Viewport *material_editor_preview_viewport;
@@ -251,6 +261,7 @@ class EditorApplication : public BaseApplication {
 		Ogre::SceneManager *material_editor_preview_scene_manager;
 		LibGens::MaterialLibrary *material_editor_material_library;
 		LibGens::Material *material_editor_material;
+		LibGens::Texture *material_editor_texture;
 		string material_editor_skeleton_name;
 		string material_editor_animation_name;
 		Ogre::AnimationState *material_editor_animation_state;
@@ -265,6 +276,11 @@ class EditorApplication : public BaseApplication {
 
 		// Object Movement
 		float placement_grid_snap;
+
+		// Cloning
+		list<EditorNode*> cloning_nodes;
+		list<EditorNode*> temporary_nodes;
+
 	public:
 		EditorApplication(void);
 		virtual ~EditorApplication(void);
@@ -298,6 +314,7 @@ class EditorApplication : public BaseApplication {
 		void updateNodeVisibility();
 		void toggleNodeVisibility(unsigned int flag);
 		void updateVisibilityGUI();
+		void rememberCloningNodes();
 
 		void copySelection();
 		void pasteSelection();
@@ -366,15 +383,29 @@ class EditorApplication : public BaseApplication {
 		void loadMaterialEditorSkeletonGUI();
 		void loadMaterialEditorAnimationGUI();
 		void rebuildMaterialPreviewNodes();
+		void materialEditorTerrainMode();
+		void materialEditorModelMode();
+		void saveMaterialEditorModelGUI();
+		void saveMaterialEditorMaterial();
+		void pickMaterialEditorTextureGUI();
+		void addMaterialEditorTextureGUI();
 
 		void cleanMaterialEditorModelGUI();
 		void clearSelectionMaterialEditorGUI();
+		void clearTextureInfo();
 		void rebuildListMaterialEditorGUI();
 		void createPreviewMaterialEditorGUI();
 		void updateMaterialEditorIndex(int selection_index);
+		void updateMaterialEditorTextureIndex(int selection_index);
 		void updateMaterialEditorInfo();
+		void updateMaterialEditorTextureList();
+		void updateMaterialTextureInfo();
 		void updateEditParameterMaterialEditor(size_t i, LibGens::Color parameter_color);
 		void updateEditShaderMaterialEditor(string shader_name);
+		void updateEditTextureUnitMaterialEditor(string unit_name);
+		void updateEditTextureMaterialEditor(string texture_name, bool update_ui = false);
+		void removeMaterialEditorTexture();
+		void loadMaterialDefaultParams();
 
 		void createObjectsPropertiesGUI();
 		void updateObjectsPropertiesGUI();
@@ -383,6 +414,15 @@ class EditorApplication : public BaseApplication {
 		void editObjectPropertyIndex(int selection_index);
 		void updateHelpWithObjectGUI(LibGens::Object *object);
 		void updateHelpWithPropertyGUI(LibGens::ObjectElement *element);
+
+		void openMultiSetParamDlg();
+		void closeMultiSetParamDlg();
+		void clearMultiSetParamDlg();
+		void createMultiSetParamObjects();
+		void getVectorFromObject();
+		void setCloningMode(size_t mode);
+		void setVectorAndSpacing();
+		void deleteTemporaryNodes();
 
 		void clearEditPropertyGUI();
 		void closeEditPropertyGUI();

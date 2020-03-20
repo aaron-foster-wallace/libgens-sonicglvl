@@ -18,71 +18,42 @@
 //=========================================================================
 
 #include "LibGens.h"
-#include "Light.h"
-#include "GITextureGroup.h"
-#include "FreeImage.h"
+#include "Model.h"
+#include "Mesh.h"
+#include "Morph.h"
+#include <unordered_map>
+#include "Submesh.h"
+#include "Bone.h"
 
 int main(int argc, char** argv) {
-	LibGens::initialize();
-	LibGens::Error::setLogging(true);
-	FreeImage_Initialise();
+    LibGens::Model m1(argv[1]);
+    m1.fixVertexFormatForPC();
+    m1.save(argv[1], LIBGENS_MODEL_ROOT_DYNAMIC_UNLEASHED_2);
 
-	LibGens::GITextureGroup group;
-	LibGens::File file("gia-296/atlasinfo", LIBGENS_FILE_READ_BINARY);
-	group.readAtlasinfo(&file);
-	list<LibGens::GITexture *> gi_textures = group.getTextures();
+    //LibGens::Model m1(argv[1]);
+    //LibGens::Model m2(argv[2]);
 
-	for (list<LibGens::GITexture *>::iterator it = gi_textures.begin(); it != gi_textures.end(); it++) {
-		string texture_name = (*it)->getName();
-		string texture_filename = "gia-296/" + texture_name + ".dds";
+    //vector<LibGens::Bone*> bones = m1.getBones();
+    //vector<LibGens::MorphSet*> sets = m1.getMorpherSets();
 
-		// Use FreeImage to convert the DDS to a png properly, since Qt doesn't load the alpha channels like it should.
-		FIBITMAP *bitmap = NULL;
-		FREE_IMAGE_FORMAT fif = FreeImage_GetFileType(texture_filename.c_str());
-		if (fif == FIF_UNKNOWN)
-			fif = FreeImage_GetFIFFromFilename(texture_filename.c_str());
+    //for (auto it = sets.begin(); it != sets.end(); ++it)
+    //{
+    //    LibGens::Mesh* mesh = (*it)->getMesh();
+    //    vector<LibGens::Submesh*> submeshes = mesh->getSubmeshes();
+    //    for (auto it2 = submeshes.begin(); it2 != submeshes.end(); ++it2)
+    //    {
+    //        vector<unsigned char> boneTable = (*it2)->getBoneTable();
+    //        (*it2)->clearBoneTable();
+    //        for (auto it3 = boneTable.begin(); it3 != boneTable.end(); ++it3)
+    //        {
+    //            (*it2)->addBone(m2.getBoneIndexByName(bones[(*it3)]->getName()));
+    //        }
+    //    }
+    //    m2.addMorpherSet(*it);
+    //}
 
-		if (fif != FIF_UNKNOWN) {
-			bitmap = FreeImage_Load(fif, texture_filename.c_str());
-		}
-
-		// Load the converter texture and use it to extract information from there.
-		if (bitmap) {
-			unsigned int texture_width = FreeImage_GetWidth(bitmap);
-			unsigned int texture_height = FreeImage_GetHeight(bitmap);
-			(*it)->setWidth(texture_width);
-			(*it)->setHeight(texture_height);
-
-			list<LibGens::GISubtexture *> subtextures = (*it)->getSubtextures();
-			for (list<LibGens::GISubtexture *>::iterator it2 = subtextures.begin(); it2 != subtextures.end(); it2++) {
-				unsigned int subtexture_width = texture_width * (*it2)->getWidth();
-				unsigned int subtexture_height = texture_height * (*it2)->getHeight();
-
-				LibGens::GISubtexture *clone_subtexture = new LibGens::GISubtexture();
-				clone_subtexture->setPixelWidth(subtexture_width);
-				clone_subtexture->setPixelHeight(subtexture_height);
-				clone_subtexture->setName((*it2)->getName());
-				group.addSubtextureToOrganize(clone_subtexture);
-			}
-
-			FreeImage_Unload(bitmap);
-		}
-	}
-
-	group.deleteTextures();
-	group.organizeSubtextures(2048);
-	gi_textures = group.getTextures();
-	printf("Generated %d textures\n", gi_textures.size());
-	for (list<LibGens::GITexture *>::iterator it = gi_textures.begin(); it != gi_textures.end(); it++) {
-		printf("%s: %d %d\n", (*it)->getName().c_str(), (*it)->getWidth(), (*it)->getHeight());
-
-		list<LibGens::GISubtexture *> gi_subtextures = (*it)->getSubtextures();
-		for (list<LibGens::GISubtexture *>::iterator it2 = gi_subtextures.begin(); it2 != gi_subtextures.end(); it2++) {
-			printf("%s: %f %f %f %f %d %d\n", (*it2)->getName().c_str(), (*it2)->getX(), (*it2)->getY(), (*it2)->getWidth(), (*it2)->getHeight(), (*it2)->getPixelWidth(), (*it2)->getPixelHeight());
-		}
-	}
-
-	getchar();
+    //m2.fixVertexFormatForPC();
+    //m2.save(argv[3]);
 
     return 0;
 }

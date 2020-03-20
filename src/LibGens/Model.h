@@ -28,6 +28,7 @@
 
 namespace LibGens {
 	class Mesh;
+	class MorphSet;
 	class Bone;
 	class Vertex;
 	class VRMapSample;
@@ -36,6 +37,7 @@ namespace LibGens {
 	class Model {
 		protected:
 			vector<Mesh *> meshes;
+			vector<MorphSet*> morph_sets;
 			vector<Bone *> bones;
 			vector<MirageProperty *> properties;
 			string name;
@@ -79,6 +81,8 @@ namespace LibGens {
 			unsigned int getEstimatedMemorySize();
 			void changeVertexFormat(int format);
 			void setPropertyValue(string name, unsigned int value);
+			vector<MorphSet*> getMorpherSets();
+			void addMorpherSet(MorphSet* morpher_set);
 			~Model();
 	};
 }

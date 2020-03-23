@@ -23,6 +23,8 @@
 #include "Submesh.h"
 #include "Light.h"
 
+#include <unordered_set>
+
 namespace LibGens {
 	TerrainInstance::TerrainInstance() {
 		name = "";
@@ -145,6 +147,11 @@ namespace LibGens {
 
 	void TerrainInstanceElement::build(vector<unsigned int> light_indices_p, vector<Polygon> faces_p) {
 		light_indices = light_indices_p;
+
+		if (faces_p.empty()) {
+			faces.clear();
+			return;
+		}
 
 		triangle_stripper::indices tri_indices;
 		tri_indices.reserve(faces_p.size() * 3);
@@ -584,15 +591,26 @@ namespace LibGens {
 		}
 
 		vector<Light *> lights;
+
+		vector<AABB> light_aabbs;
+		light_aabbs.resize(light_list->getLightCount());
 		
 		bool has_omni_lights = false;
 		if (light_list) {
 			lights = light_list->getLights();
 
-			for (vector<Light *>::iterator it = lights.begin(); it != lights.end(); it++) {
-				if ((*it)->getType() == LIBGENS_LIGHT_TYPE_OMNI) {
+			for (size_t i = 0; i < lights.size(); i++) {
+				Light* light = lights[i];
+
+				if (light->getType() == LIBGENS_LIGHT_TYPE_OMNI) {
 					has_omni_lights = true;
-					break;
+
+					AABB light_aabb;
+					light_aabb.reset();
+					light_aabb.addPoint(light->getPosition() + light->getOuterRange());
+					light_aabb.addPoint(light->getPosition() - light->getOuterRange());
+
+					light_aabbs[i] = light_aabb;
 				}
 			}
 		}
@@ -602,8 +620,14 @@ namespace LibGens {
 
 		this->meshes.clear();
 
-		AABB aabb = model->getAABB();
-		aabb.transform(matrix);
+		struct Element {
+			set<unsigned int> light_indices;
+			vector<Polygon> faces;
+		};
+
+		vector<AABB> face_aabbs;
+		vector<Element*> face_elements;
+		vector<Polygon> unaffected_faces;
 
 		vector<Mesh *> meshes = model->getMeshes();
 		for (vector<Mesh *>::iterator it = meshes.begin(); it != meshes.end(); it++) {
@@ -615,88 +639,91 @@ namespace LibGens {
 					TerrainInstanceSubmesh *submesh = new TerrainInstanceSubmesh();
 
 					if (has_omni_lights) {
-						vector<Vertex *> vertices = (*it2)->getVertices();
-						vector<Polygon> faces = (*it2)->getFaces();
+						AABB submesh_aabb = (*it2)->getAABB();
+						submesh_aabb.transform(matrix);
 
-						vector<AABB> face_aabbs;
-						face_aabbs.reserve(faces.size());
-						for (vector<Polygon>::iterator it3 = faces.begin(); it3 != faces.end(); it3++) {
-							face_aabbs.push_back(AABB(vertices[(*it3).a]->getTPosition(matrix),
-													  vertices[(*it3).b]->getTPosition(matrix),
-													  vertices[(*it3).c]->getTPosition(matrix)));
+						bool found = false;
+						for (unsigned int j = 0; j < lights.size(); j++) {
+							if (lights[j]->getType() == LIBGENS_LIGHT_TYPE_OMNI && submesh_aabb.intersects(light_aabbs[j])) {
+								found = true;
+								break;
+							}
 						}
 
-						struct Element {
-							set<unsigned int> light_indices;
-							vector<Polygon> faces;
-						};
+						if (found) {
+							vector<Vertex*> vertices = (*it2)->getVertices();
+							vector<Polygon> faces = (*it2)->getFaces();
 
-						vector<Element *> face_elements;
-						face_elements.resize(faces.size(), NULL);
+							face_aabbs.clear();
+							face_aabbs.reserve(faces.size());
+							for (vector<Polygon>::iterator it3 = faces.begin(); it3 != faces.end(); it3++) {
+								face_aabbs.push_back(AABB(vertices[(*it3).a]->getTPosition(matrix),
+									vertices[(*it3).b]->getTPosition(matrix),
+									vertices[(*it3).c]->getTPosition(matrix)));
+							}
 
-						for (unsigned int j = 0; j < lights.size(); j++) {
-							if (lights[j]->getType() == LIBGENS_LIGHT_TYPE_OMNI) {
-								// TODO: Maybe we can use triangle vs sphere intersection
-								// for this?
-								AABB light_aabb;
-								light_aabb.reset();
-								light_aabb.addPoint(lights[j]->getPosition() + lights[j]->getOuterRange());
-								light_aabb.addPoint(lights[j]->getPosition() - lights[j]->getOuterRange());
+							face_elements.clear();
+							face_elements.resize(faces.size(), NULL);
 
-								if (!aabb.intersects(light_aabb)) {
-									continue;
+							for (unsigned int j = 0; j < lights.size(); j++) {
+								if (lights[j]->getType() == LIBGENS_LIGHT_TYPE_OMNI) {
+									AABB light_aabb = light_aabbs[i];
+
+									if (!submesh_aabb.intersects(light_aabb)) {
+										continue;
+									}
+
+									Element* light_element = new Element();
+									light_element->faces.clear();
+									light_element->light_indices.clear();
+									light_element->light_indices.insert(j);
+
+									for (unsigned int f = 0; f < faces.size(); f++) {
+										if (face_aabbs[f].intersects(light_aabb)) {
+											Element* element = face_elements[f];
+											if (element) {
+												element->light_indices.insert(j);
+											}
+											else {
+												light_element->faces.push_back(faces[f]);
+												face_elements[f] = light_element;
+											}
+										}
+									}
+
+									if (light_element->faces.empty()) {
+										delete light_element;
+									}
 								}
+							}
 
-								Element *light_element = new Element();
-								light_element->faces.clear();
-								light_element->light_indices.clear();
-								light_element->light_indices.insert(j);
+							int affected_face_count = 0;
+
+							unordered_set<Element*> elements(face_elements.begin(), face_elements.end());
+							for (unordered_set<Element*>::iterator it3 = elements.begin(); it3 != elements.end(); it3++) {
+								if (*it3) {
+									TerrainInstanceElement* element = new TerrainInstanceElement();
+									element->build(vector<unsigned int>((*it3)->light_indices.begin(), (*it3)->light_indices.end()), (*it3)->faces);
+									submesh->addElement(element);
+									affected_face_count += (*it3)->faces.size();
+									delete* it3;
+								}
+							}
+
+							if (elements.size() > 1) {
+								unaffected_faces.clear();
+								unaffected_faces.reserve(faces.size() - affected_face_count);
 
 								for (unsigned int f = 0; f < faces.size(); f++) {
-									if (face_aabbs[f].intersects(light_aabb)) {
-										Element *element = face_elements[f];
-										if (element) {
-											element->light_indices.insert(j);
-										}
-										else {
-											light_element->faces.push_back(faces[f]);
-											face_elements[f] = light_element;
-										}
+									if (face_elements[f] == NULL) {
+										unaffected_faces.push_back(faces[f]);
 									}
 								}
 
-								if (light_element->faces.empty()) {
-									delete light_element;
-								}
-							}
-						}
-
-						int affected_face_count = 0;
-
-						set<Element *> elements(face_elements.begin(), face_elements.end());
-						for (set<Element *>::iterator it3 = elements.begin(); it3 != elements.end(); it3++) {
-							if (*it3) {
-								TerrainInstanceElement *element = new TerrainInstanceElement();
-								element->build(vector<unsigned int>((*it3)->light_indices.begin(), (*it3)->light_indices.end()), (*it3)->faces);
+								TerrainInstanceElement* element = new TerrainInstanceElement();
+								element->build(vector<unsigned int>(), unaffected_faces);
 								submesh->addElement(element);
-								affected_face_count += (*it3)->faces.size();
-								delete *it3;
 							}
-						}
-
-						if (elements.size() > 1) {
-							vector<Polygon> unaffected_faces;
-							unaffected_faces.reserve(faces.size() - affected_face_count);
-
-							for (unsigned int f = 0; f < faces.size(); f++) {
-								if (face_elements[f] == NULL) {
-									unaffected_faces.push_back(faces[f]);
-								}
-							}
-
-							TerrainInstanceElement *element = new TerrainInstanceElement();
-							element->build(vector<unsigned int>(), unaffected_faces);
-							submesh->addElement(element);
 						}
 					}
 

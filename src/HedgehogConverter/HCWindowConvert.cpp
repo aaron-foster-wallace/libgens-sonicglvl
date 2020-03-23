@@ -244,13 +244,10 @@ bool HCWindow::convert() {
 		LibGens::TerrainInstance* instance = new LibGens::TerrainInstance(model_source_path.toStdString());
 		instance->setMatrix(global_transform * instance->getMatrix());
 
-		string output_file_path = temp_path.toStdString() + "/" + instance->getName() + ".terrain-instanceinfo";
-		instance->save(output_file_path);
-
 		instance_map.insertMulti(instance->getModelName().c_str(), instance);
 		scene_data.instances.insertMulti(-1, instance);
 
-		logProgress(ProgressNormal, QString("Loaded terrain instance info and saved it to %1").arg(output_file_path.c_str()));
+		logProgress(ProgressNormal, QString("Loaded terrain instance info from %1").arg(model_source_path));
 	}
 
 	foreach(QString model_source_path, model_source_paths) {
@@ -289,11 +286,18 @@ bool HCWindow::convert() {
 		}
 		else {
 		    for (; it != instance_map.end() && it.key() == model_name; ++it) {
-				LibGens::AABB aabb = model.getAABB();
-				aabb.transform(it.value()->getMatrix());
+				LibGens::TerrainInstance* instance = it.value();
 
-				it.value()->setAABB(aabb);
-				it.value()->buildMeshes(&model, &light_list);
+				LibGens::AABB aabb = model.getAABB();
+				aabb.transform(instance->getMatrix());
+
+				instance->setAABB(aabb);
+				instance->buildMeshes(&model, &light_list);
+
+				string output_file_path = temp_path.toStdString() + "/" + instance->getName() + ".terrain-instanceinfo";
+				instance->save(output_file_path);
+
+				logProgress(ProgressNormal, QString("Saved terrain instance info to %1").arg(output_file_path.c_str()));
 		    }
 		}
 

@@ -66,6 +66,10 @@ QList<LibGens::TerrainGroup *> HCWindow::convertTerrainGroups(SceneData &scene_d
 }
 
 void HCWindow::convertTerrainGroups(QList<LibGens::TerrainGroup *> &terrain_groups, QList<LibGens::TerrainInstance *> instances, LibGens::AABB aabb) {
+	if (instances.empty()) {
+		return;
+	}
+
 	// Calculate current AABB
 	if ((aabb.start == LibGens::Vector3(0, 0, 0)) && (aabb.end == LibGens::Vector3(0, 0, 0))) {
 		aabb.reset();

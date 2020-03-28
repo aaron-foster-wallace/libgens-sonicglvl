@@ -289,12 +289,7 @@ namespace LibGens {
 		MirageNode *contexts_node = root_node->find("Contexts", false);
 		if (contexts_node) {
 			file->goToAddress(contexts_node->getDataAddress());
-
-			switch (contexts_node->getValue()) {
-				case LIBGENS_MATERIAL_ROOT_GENERATIONS:
-					readRootNodeGenerations(file);
-					break;
-			}
+			readRootNodeGenerations(file);
 		}
 
 		delete root_node;

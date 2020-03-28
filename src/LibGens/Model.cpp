@@ -184,12 +184,7 @@ namespace LibGens {
 		MirageNode *contexts_node = root_node->find("Contexts", false);
 		if (contexts_node) {
 			file->goToAddress(contexts_node->getDataAddress());
-
-			switch (contexts_node->getValue()) {
-				case LIBGENS_MODEL_ROOT_DYNAMIC_GENERATIONS:
-					readRootNodeDynamicGenerations(file);
-					break;
-			}
+			readRootNodeDynamicGenerations(file);
 		}
 
 		delete root_node;

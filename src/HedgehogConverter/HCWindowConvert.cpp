@@ -261,7 +261,6 @@ bool HCWindow::convert() {
 		}
 
 		LibGens::Model model(model_source_path.toStdString());
-		model.buildAABB();
 
 		QString model_name = QString(model.getName().c_str());
 		QString model_directory_path = QFileInfo(model_source_path).absoluteDir().absolutePath();

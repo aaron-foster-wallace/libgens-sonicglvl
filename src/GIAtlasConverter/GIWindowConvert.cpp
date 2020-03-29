@@ -297,15 +297,15 @@ bool GIWindow::convert() {
 			unsigned int folder_size = 0;
 			int texture_index = 0;
 			list<LibGens::GITexture *> textures = gi_groups[g]->getTextures();
-			for (list<LibGens::GITexture*>::iterator it = textures.begin(); it != textures.end(); it++) {
+			for (list<LibGens::GITexture *>::iterator it = textures.begin(); it != textures.end(); it++) {
 				unsigned int w = (*it)->getWidth();
 				unsigned int h = (*it)->getHeight();
 
 				// Create the bitmap with the debugging colors
-				FIBITMAP* atlas_bitmap = FreeImage_Allocate(w, h, 32);
+				FIBITMAP *atlas_bitmap = FreeImage_Allocate(w, h, 32);
 
-				list<LibGens::GISubtexture*> subtextures = (*it)->getSubtextures();
-				for (list<LibGens::GISubtexture*>::iterator it2 = subtextures.begin(); it2 != subtextures.end(); it2++) {
+				list<LibGens::GISubtexture *> subtextures = (*it)->getSubtextures();
+				for (list<LibGens::GISubtexture *>::iterator it2 = subtextures.begin(); it2 != subtextures.end(); it2++) {
 					int start_x = (*it2)->getX() * w;
 					int start_y = (*it2)->getY() * h;
 					int sub_w = (*it2)->getPixelWidth();
@@ -324,7 +324,7 @@ bool GIWindow::convert() {
 						}
 					}
 				}
-
+				
 				// Save the bitmap
 				QString bitmap_name = QString("%1/%2").arg(gi_temp_path).arg((*it)->getName().c_str());
 				QString bitmap_filename = bitmap_name + ".png";
@@ -334,20 +334,27 @@ bool GIWindow::convert() {
 				FreeImage_Unload(atlas_bitmap);
 
 				// Convert the bitmap to dds
-				logProgress(ProgressNormal, QString("Calling texconv converter for %1 to %2").arg(bitmap_filename).arg(texture_filename));
+				logProgress(ProgressNormal, QString("Calling NVDXT converter for %1 to %2").arg(bitmap_filename).arg(texture_filename));
 
+				const QString temp_texture = "temp.dds";
 				QStringList arguments;
-				arguments << "-ft" << "dds" << "-f" << "DXT5" << bitmap_filename;
+				arguments << "-file" << bitmap_filename << "-output" << temp_texture;
 
 				QProcess conversion_process;
-				conversion_process.start("texconv", arguments);
+				conversion_process.start("nvdxt", arguments);
 				conversion_process.waitForFinished();
 				QString conversion_output = conversion_process.readAllStandardOutput();
-				logProgress(ProgressNormal, QString("texconv Output: " + conversion_output));
+				logProgress(ProgressNormal, QString("NVDXT Output: " + conversion_output));
 
 				QFile::remove(bitmap_filename);
-				logProgress(ProgressNormal, QString("Converter texconv finished with %1 to %2").arg(bitmap_filename).arg(texture_filename));
-				folder_size += QFileInfo(texture_filename).size();
+				QFile::remove(texture_filename);
+				if (QFile::copy(temp_texture, texture_filename)) {
+					logProgress(ProgressNormal, QString("Converter NVDXT finished with %1 to %2").arg(bitmap_filename).arg(texture_filename));
+					folder_size += QFileInfo(texture_filename).size();
+				}
+				else {
+					logProgress(ProgressError, QString("Couldn't copy NVDXT's result to %1. Is this directory write-protected?").arg(texture_filename));
+				}
 
 				texture_index++;
 			}
@@ -691,17 +698,17 @@ bool GIWindow::convert() {
 
 				logProgress(ProgressNormal, QString("Saving textures and atlasinfo file..."));
 				gi_textures = group->getTextures();
-				for (list<LibGens::GITexture*>::iterator it = gi_textures.begin(); it != gi_textures.end(); it++) {
+				for (list<LibGens::GITexture *>::iterator it = gi_textures.begin(); it != gi_textures.end(); it++) {
 					QString atlas_image_filename = QString("%1/%2.png").arg(new_group_temp_path).arg((*it)->getName().c_str());
 					QString atlas_texture_filename = QString("%1/%2.dds").arg(new_group_temp_path).arg((*it)->getName().c_str());
 
 					int atlas_width = (*it)->getWidth();
 					int atlas_height = (*it)->getHeight();
 
-					FIBITMAP* atlas_bitmap = FreeImage_Allocate(atlas_width, atlas_height, 32);
+					FIBITMAP *atlas_bitmap = FreeImage_Allocate(atlas_width, atlas_height, 32);
 
-					list<LibGens::GISubtexture*> subtextures = (*it)->getSubtextures();
-					for (list<LibGens::GISubtexture*>::iterator it2 = subtextures.begin(); it2 != subtextures.end(); it2++) {
+					list<LibGens::GISubtexture *> subtextures = (*it)->getSubtextures();
+					for (list<LibGens::GISubtexture *>::iterator it2 = subtextures.begin(); it2 != subtextures.end(); it2++) {
 						QString subtexture_name = (*it2)->getName().c_str();
 						if (subtexture_name.contains(quality_level_string)) {
 							subtexture_name.remove(quality_level_string);
@@ -748,18 +755,24 @@ bool GIWindow::convert() {
 					FreeImage_Save(FIF_PNG, atlas_bitmap, atlas_image_filename.toUtf8().constData());
 					FreeImage_Unload(atlas_bitmap);
 
+					const QString temp_texture = "temp.dds";
 					QStringList arguments;
-					arguments << "-ft" << "dds" << "-f" << "DXT5" << atlas_image_filename;
+					arguments << "-file" << atlas_image_filename << "-output" << temp_texture;
 
-					logProgress(ProgressNormal, QString("Converting with texconv " + atlas_image_filename));
+					logProgress(ProgressNormal, QString("Converting with NVDXT " + atlas_image_filename));
 					QProcess conversion_process;
-					conversion_process.start("texconv", arguments);
+					conversion_process.start("nvdxt", arguments);
 					conversion_process.waitForFinished();
 					QString conversion_output = conversion_process.readAllStandardOutput();
-					QFile::remove(atlas_image_filename);
-					logProgress(ProgressNormal, QString("texconv Output: " + conversion_output));
-					logProgress(ProgressNormal, QString("Converter texconv finished with %1 to %2").arg(atlas_image_filename).arg(atlas_texture_filename));
-					folder_size += QFileInfo(atlas_texture_filename).size();
+					logProgress(ProgressNormal, QString("NVDXT Output: " + conversion_output));
+					QFile::remove(atlas_texture_filename);
+					if (QFile::copy(temp_texture, atlas_texture_filename)) {
+						logProgress(ProgressNormal, QString("Converter NVDXT finished with %1 to %2").arg(atlas_image_filename).arg(atlas_texture_filename));
+						folder_size += QFileInfo(atlas_texture_filename).size();
+					}
+					else {
+						logProgress(ProgressError, QString("Couldn't copy NVDXT's result to %1. Is this directory write-protected?").arg(atlas_texture_filename));
+					}
 				}
 				
 				logProgress(ProgressNormal, QString("Updating folder size from %1 to %2.").arg(group->getFolderSize()).arg(folder_size));

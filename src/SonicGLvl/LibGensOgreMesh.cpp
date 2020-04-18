@@ -567,6 +567,27 @@ void setShaderParameters(Ogre::Pass *pass, Ogre::GpuProgramParametersSharedPtr p
 				else if (shader_parameter->getName() == "g_ChrPlayableMenuParam") {
 					program_params->setConstant((size_t)index, Ogre::Vector4(1, 1, 1, 1));
 				}
+				else if (shader_parameter->getName() == "g_ChrPlayableMenuParam") {
+					program_params->setConstant((size_t)index, Ogre::Vector4(1, 1, 1, 1));
+				}
+				else if (shader_parameter->getName() == "PBRFactor") {
+					program_params->setConstant((size_t)index, Ogre::Vector4(0.1f, 0.8f, 0, 0));
+				}
+				else if (shader_parameter->getName() == "Luminance") {
+					program_params->setConstant((size_t)index, Ogre::Vector4(1, 0, 0, 0));
+				}
+				else if (shader_parameter->getName() == "FalloffFactor") {
+					program_params->setConstant((size_t)index, Ogre::Vector4(1, 5, 0.15f, 1));
+				}
+				else if (shader_parameter->getName() == "ChrEye1") {
+					program_params->setConstant((size_t)index, Ogre::Vector4(0.03f, -0.05f, 0.01f, 0.01f));
+				}
+				else if (shader_parameter->getName() == "ChrEye2") {
+					program_params->setConstant((size_t)index, Ogre::Vector4(0.02f, 0.09f, 0.12f, 0.07f));
+				}
+				else if (shader_parameter->getName() == "ChrEye3") {
+					program_params->setConstant((size_t)index, Ogre::Vector4(0, 0, 0.1f, 0.1f));
+				}
 				else {
 					SHOW_MSG(("Unhandled constant/variable float4 " + shader_parameter->getName() + " with index " + ToString((int)index) + " on the Shader " + ToString(material->getShader()) + ". Handle it!").c_str());
 				}
@@ -644,6 +665,17 @@ void setShaderParameters(Ogre::Pass *pass, Ogre::GpuProgramParametersSharedPtr p
 				}
 				else if (shader_parameter->getName() == "INDEXEDLIGHTMAP") {
 				}
+				else if (shader_parameter->getName() == "IBL") {
+					if (current_level) {
+				        pass->getTextureUnitState((size_t)index)->setTextureName(current_level->getName() + "_defaultibl.dds", Ogre::TEX_TYPE_CUBE_MAP);
+					}
+					else {
+					    pass->getTextureUnitState((size_t)index)->setTextureName("defaultibl.dds", Ogre::TEX_TYPE_CUBE_MAP);
+					}
+				}
+				else if (shader_parameter->getName() == "EnvBRDF") {
+					pass->getTextureUnitState((size_t)index)->setTextureName("env_brdf.dds");
+				}
 				else if (shader_parameter->getName() == "PamNpcEye") {
 				}
 				else if (shader_parameter->getName() == "diffuse") {
@@ -659,6 +691,14 @@ void setShaderParameters(Ogre::Pass *pass, Ogre::GpuProgramParametersSharedPtr p
 				else if (shader_parameter->getName() == "gloss") {
 				}
 				else if (shader_parameter->getName() == "opacity") {
+				}
+				else if (shader_parameter->getName() == "transparency") {
+				}
+				else if (shader_parameter->getName() == "emission") {
+				}
+				else if (shader_parameter->getName() == "curvature") {
+				}
+				else if (shader_parameter->getName() == "falloff") {
 				}
 				else {
 					SHOW_MSG(("Unhandled constant/variable sampler " + shader_parameter->getName() + " with index " + ToString((int)index) + " on the Shader " + ToString(material->getShader()) + ". Handle it!").c_str());

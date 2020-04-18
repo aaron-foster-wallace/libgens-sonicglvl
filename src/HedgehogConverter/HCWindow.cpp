@@ -85,6 +85,7 @@ HCWindow::HCWindow(QWidget *parent) : QMainWindow(parent) {
 		converter_settings.remove_material_tags = true;
 		converter_settings.remove_model_tags = true;
 		converter_settings.use_model_groups = true;
+		converter_settings.compress_groups = true;
 		converter_settings.convert_lights = true;
 		converter_settings.group_cell_size = 25.0;
 		converter_settings.position_x = converter_settings.position_y = converter_settings.position_z = 0.0;
@@ -131,6 +132,7 @@ void HCWindow::loadSettings(QString filename) {
 	converter_settings.remove_material_tags = settings.value("remove_material_tags", true).toBool();
 	converter_settings.remove_model_tags = settings.value("remove_model_tags", true).toBool();
 	converter_settings.use_model_groups = settings.value("use_model_groups", true).toBool();
+	converter_settings.compress_groups = settings.value("compress_groups", true).toBool();
 	converter_settings.convert_lights = settings.value("convert_lights", true).toBool();
 	converter_settings.position_x = settings.value("position_x", 0.0).toDouble();
 	converter_settings.position_y = settings.value("position_y", 0.0).toDouble();
@@ -158,6 +160,7 @@ void HCWindow::saveSettings(QString filename) {
 	settings.setValue("remove_material_tags", converter_settings.remove_material_tags);
 	settings.setValue("remove_model_tags", converter_settings.remove_model_tags);
 	settings.setValue("use_model_groups", converter_settings.use_model_groups);
+	settings.setValue("compress_groups", converter_settings.compress_groups);
 	settings.setValue("convert_lights", converter_settings.convert_lights);
 	settings.setValue("position_x", converter_settings.position_x);
 	settings.setValue("position_y", converter_settings.position_y);
@@ -187,6 +190,7 @@ void HCWindow::updateSettingsFromUi() {
 	converter_settings.remove_material_tags = chk_remove_tags_materials->isChecked();
 	converter_settings.remove_model_tags = chk_remove_tags_models->isChecked();
 	converter_settings.use_model_groups = chk_model_groups->isChecked();
+	converter_settings.compress_groups = chk_compress_groups->isChecked();
 	converter_settings.position_x = dsb_position_x->value();
 	converter_settings.position_y = dsb_position_y->value();
 	converter_settings.position_z = dsb_position_z->value();
@@ -214,6 +218,7 @@ void HCWindow::updateUiFromSettings() {
 	chk_remove_tags_materials->setChecked(converter_settings.remove_material_tags);
 	chk_remove_tags_models->setChecked(converter_settings.remove_model_tags);
 	chk_model_groups->setChecked(converter_settings.use_model_groups);
+	chk_compress_groups->setChecked(converter_settings.compress_groups);
 	dsb_position_x->setValue(converter_settings.position_x);
 	dsb_position_y->setValue(converter_settings.position_y);
 	dsb_position_z->setValue(converter_settings.position_z);

@@ -508,6 +508,7 @@ namespace LibGens {
 			size_t sz=getFileSize();
 			char *data=new char[sz];
 
+			goToAddress(0);
 			read(data, sz);
 			file.write(data, sz);
 

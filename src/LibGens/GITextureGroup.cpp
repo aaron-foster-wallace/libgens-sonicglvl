@@ -24,6 +24,7 @@
 
 namespace LibGens {
 	GISubtexture::GISubtexture() {
+		user_flag = false;
 	}
 
 	void GISubtexture::setPixelWidth(unsigned int v) {
@@ -46,7 +47,15 @@ namespace LibGens {
 		return max(pixel_w, pixel_h);
 	}
 
-	string GISubtexture::getName() {
+    bool GISubtexture::getUserFlag() {
+		return user_flag;
+    }
+
+    void GISubtexture::setUserFlag(bool value) {
+		user_flag = value;
+    }
+
+    string GISubtexture::getName() {
 		return name;
 	}
 
@@ -196,6 +205,9 @@ namespace LibGens {
 		file->readFloat8(&x);
 		file->readFloat8(&y);
 
+		user_flag = w_c >> 7;
+		w_c &= 0x7F;
+
 		if (w_c > 0) w = 1.0f / pow(2.0f, (float) w_c);
 		else w = 1.0f;
 
@@ -213,7 +225,7 @@ namespace LibGens {
 		file->writeUChar(&texture_name_size);
 		file->writeString(name.c_str());
 
-		unsigned char w_c = (int)(log(1.0f / w) / log(2.0f));
+		unsigned char w_c = (int)(log(1.0f / w) / log(2.0f)) | (user_flag << 7);
 		unsigned char h_c = (int)(log(1.0f / h) / log(2.0f));
 		file->writeUChar(&w_c);
 		file->writeUChar(&h_c);
@@ -425,9 +437,10 @@ namespace LibGens {
 			return;
 		}
 
-		unsigned short texture_count=0;
-		file->readInt16BE(&texture_count);
 		file->moveAddress(1);
+
+		unsigned short texture_count=0;
+		file->readInt16(&texture_count);
 
 		for (size_t i=0; i<texture_count; i++) {
 			GITexture *texture=new GITexture(terrain_folder);
@@ -476,8 +489,8 @@ namespace LibGens {
 
 	void GITextureGroup::writeAtlasinfo(File *file) {
 		unsigned short texture_count=textures.size();
-		file->writeInt16BE(&texture_count);
 		file->writeNull(1);
+		file->writeInt16(&texture_count);
 
 		for (list<GITexture *>::iterator it = textures.begin(); it != textures.end(); it++) {
 			(*it)->write(file);

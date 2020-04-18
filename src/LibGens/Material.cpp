@@ -483,14 +483,17 @@ namespace LibGens {
 		// Save texset and textures.
 		file = new File(folder + texset_name + LIBGENS_TEXSET_EXTENSION, LIBGENS_FILE_WRITE_BINARY);
 		if (file->valid()) {
+			file->prepareHeader(LIBGENS_TEXSET_ROOT_UNLEASHED);
+
 			size_t header_address = file->getCurrentAddress();
 			size_t texture_address = header_address + 8;
 			size_t texture_count = textures.size();
 
-			file->prepareHeader(LIBGENS_TEXSET_ROOT_UNLEASHED);
-
 			file->writeInt32BE(&texture_count);
 			file->writeInt32BEA(&texture_address);
+
+			file->goToAddress(texture_address);
+			file->writeNull(texture_count * 4);
 
 			vector<size_t> internal_name_addresses;
 			for (unsigned int i = 0; i < textures.size(); i++) {
@@ -510,7 +513,7 @@ namespace LibGens {
 
 			// Save textures
 			for (unsigned int i = 0; i < textures.size(); i++) {
-				textures[i]->save(folder + "/" + textures[i]->getTexset() + LIBGENS_TEXTURE_EXTENSION);
+				textures[i]->save(folder + textures[i]->getTexset() + LIBGENS_TEXTURE_EXTENSION);
 			}
 		}
 

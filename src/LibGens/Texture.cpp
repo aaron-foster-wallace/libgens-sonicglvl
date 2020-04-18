@@ -71,7 +71,7 @@ namespace LibGens {
 		size_t file_address=0;
 		size_t unit_address=0;
 		file->readInt32BEA(&file_address);
-		file->goToAddress(header_address+8);
+		file->readInt32BE(&flags);
 		file->readInt32BEA(&unit_address);
 
 		file->goToAddress(file_address);
@@ -98,7 +98,7 @@ namespace LibGens {
 
 		file->goToAddress(header_address);
 		file->writeInt32BEA(&file_address);
-		file->goToAddress(header_address+8);
+		file->writeInt32BE(&flags);
 		file->writeInt32BEA(&unit_address);
 		file->goToEnd();
 	}

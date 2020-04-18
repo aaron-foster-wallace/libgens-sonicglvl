@@ -32,6 +32,7 @@ namespace LibGens {
 			string internal_name;
 			string unit;
 			string name;
+		    unsigned int flags;
 		public:
 			Texture();
 			Texture(string filename, string internal_name_p);

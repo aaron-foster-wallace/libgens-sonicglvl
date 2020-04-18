@@ -1407,15 +1407,17 @@ bool HCWindow::packGenerations(QList<LibGens::TerrainGroup *> &terrain_groups, Q
 
 			tg_ar.save(group_filename.toStdString(), 16);
 
-			logProgress(ProgressNormal, QString("Compressing %1 with CAB Compression.").arg(group_filename));
+			if (converter_settings.compress_groups) {
+			    logProgress(ProgressNormal, QString("Compressing %1 with CAB Compression.").arg(group_filename));
 
-			QStringList arguments;
-			arguments << group_filename << group_filename;
-			QProcess conversion_process;
-			conversion_process.start("makecab", arguments);
-			conversion_process.waitForFinished();
-			QString conversion_output = conversion_process.readAllStandardOutput();
-			logProgress(ProgressNormal, QString("Cabinet Maker Output: " + conversion_output));
+			    QStringList arguments;
+			    arguments << group_filename << group_filename;
+			    QProcess conversion_process;
+			    conversion_process.start("makecab", arguments);
+			    conversion_process.waitForFinished();
+			    QString conversion_output = conversion_process.readAllStandardOutput();
+			    logProgress(ProgressNormal, QString("Cabinet Maker Output: " + conversion_output));
+		    }
 
 			stage_pfd_pack.addFile(group_filename.toStdString());
 			logProgress(ProgressNormal, "Saving terrain group to " + group_filename + "...");

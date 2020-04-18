@@ -35,7 +35,8 @@ void GlobalIlluminationListener::notifyRenderSingleObject(Ogre::Renderable *rend
 				if (edit_pass->hasVertexProgram()) {
 					Ogre::GpuProgramParametersSharedPtr vp_parameters = edit_pass->getVertexProgramParameters();
 					if (!vp_parameters.isNull()) {
-						vp_parameters->setConstant(186, Ogre::Vector4(parameter->gi_texture->getWidth(), parameter->gi_texture->getHeight(), parameter->gi_texture->getX(), parameter->gi_texture->getY()));
+						float sggi_factor = parameter->gi_texture->getUserFlag() ? -1 : 1;
+						vp_parameters->setConstant(186, Ogre::Vector4(parameter->gi_texture->getWidth() * sggi_factor, parameter->gi_texture->getHeight(), parameter->gi_texture->getX(), parameter->gi_texture->getY()));
 					}
 					
 					Ogre::TextureUnitState *state=edit_pass->getTextureUnitState(10);

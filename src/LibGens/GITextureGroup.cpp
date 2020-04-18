@@ -47,15 +47,15 @@ namespace LibGens {
 		return max(pixel_w, pixel_h);
 	}
 
-    bool GISubtexture::getUserFlag() {
+	bool GISubtexture::getUserFlag() {
 		return user_flag;
-    }
+	}
 
-    void GISubtexture::setUserFlag(bool value) {
+	void GISubtexture::setUserFlag(bool value) {
 		user_flag = value;
-    }
+	}
 
-    string GISubtexture::getName() {
+	string GISubtexture::getName() {
 		return name;
 	}
 

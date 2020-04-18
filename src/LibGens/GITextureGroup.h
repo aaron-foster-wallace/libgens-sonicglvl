@@ -46,7 +46,7 @@ namespace LibGens {
 			string name;
 			GITexture *parent;
 			string full_path;
-		    bool user_flag;
+			bool user_flag;
 		public:
 			GISubtexture();
 			void read(File *file);
@@ -70,8 +70,8 @@ namespace LibGens {
 			unsigned int getPixelWidth();
 			unsigned int getPixelHeight();
 			unsigned int getBiggestPixelSize();
-		    bool getUserFlag();
-		    void setUserFlag(bool value);
+			bool getUserFlag();
+			void setUserFlag(bool value);
 	};
 
 	class GITextureTree {

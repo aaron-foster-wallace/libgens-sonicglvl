@@ -22,21 +22,26 @@
 #include "ObjectNodeHistory.h"
 #include "ObjectSet.h"
 #include "ObjectLibrary.h"
+#include "MessageTypes.h"
 
 Ogre::Rectangle2D* mMiniScreen=NULL;
 
 INT_PTR CALLBACK LeftBarCallback(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK BottomBarCallback(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam);
-
+void Game_ProcessMessage(PipeClient* client, PipeMessage* msg);
 
 EditorApplication::EditorApplication(void)
 {
 	hLeftDlg = NULL;
 	hBottomDlg = NULL;
+	game_client = new PipeClient();
+	game_client->AddMessageProcessor(Game_ProcessMessage);
+	ghost_data = nullptr;
+	isGhostRecording = false;
 }
 
 EditorApplication::~EditorApplication(void) {
-
+	delete game_client;
 }
 
 ObjectNodeManager* EditorApplication::getObjectNodeManager()
@@ -320,9 +325,6 @@ void EditorApplication::setSelectionRotation(Ogre::Quaternion q) {
 		EditorNode *node = *selected_nodes.begin();
 		node->setRotation(q);
 	}
-	else {
-		
-	}
 }
 
 
@@ -346,10 +348,17 @@ void EditorApplication::makeHistorySelection(bool mode) {
 			wrapper->push(action);
 			if (editor_mode == EDITOR_NODE_QUERY_VECTOR) {
 				VectorNode* vector_node = static_cast<VectorNode*>(*it);
-				while (property_vector_nodes[index] != vector_node)
-					++index;
+				if (!hLookAtPointDlg)
+				{
+					while (property_vector_nodes[index] != vector_node)
+						++index;
 
-				updateEditPropertyVectorGUI(index, is_list);
+					updateEditPropertyVectorGUI(index, is_list);
+				}
+				else
+				{
+					updateLookAtVectorGUI();
+				}
 			}
 		}
 		else {
@@ -391,20 +400,28 @@ void EditorApplication::makeHistorySelection(bool mode) {
 
 void EditorApplication::undoHistory() {
 	if (editor_mode == EDITOR_NODE_QUERY_VECTOR) {
-		property_vector_history->undo();
-		bool is_list = current_properties_types[current_property_index] == LibGens::OBJECT_ELEMENT_VECTOR_LIST;
-
-		for (int index = 0; index < property_vector_nodes.size(); ++index)
-			updateEditPropertyVectorGUI(index, is_list);
-		if (is_list)
+		if (hLookAtPointDlg)
 		{
-			updateEditPropertyVectorList(temp_property_vector_list);
-			if (hEditPropertyDlg && isVectorListSelectionValid())
+			look_at_vector_history->undo();
+			updateLookAtVectorGUI();
+		}
+		else
+		{
+			property_vector_history->undo();
+			bool is_list = current_properties_types[current_property_index] == LibGens::OBJECT_ELEMENT_VECTOR_LIST;
+
+			for (int index = 0; index < property_vector_nodes.size(); ++index)
+				updateEditPropertyVectorGUI(index, is_list);
+			if (is_list)
 			{
-				Ogre::Vector3 v = property_vector_nodes[current_vector_list_selection]->getPosition();
-				SetDlgItemText(hEditPropertyDlg, IDE_EDIT_VECTOR_LIST_X, ToString<float>(v.x).c_str());
-				SetDlgItemText(hEditPropertyDlg, IDE_EDIT_VECTOR_LIST_Y, ToString<float>(v.y).c_str());
-				SetDlgItemText(hEditPropertyDlg, IDE_EDIT_VECTOR_LIST_Z, ToString<float>(v.z).c_str());
+				updateEditPropertyVectorList(temp_property_vector_list);
+				if (hEditPropertyDlg && isVectorListSelectionValid())
+				{
+					Ogre::Vector3 v = property_vector_nodes[current_vector_list_selection]->getPosition();
+					SetDlgItemText(hEditPropertyDlg, IDE_EDIT_VECTOR_LIST_X, ToString<float>(v.x).c_str());
+					SetDlgItemText(hEditPropertyDlg, IDE_EDIT_VECTOR_LIST_Y, ToString<float>(v.y).c_str());
+					SetDlgItemText(hEditPropertyDlg, IDE_EDIT_VECTOR_LIST_Z, ToString<float>(v.z).c_str());
+				}
 			}
 		}
 	}
@@ -414,20 +431,28 @@ void EditorApplication::undoHistory() {
 
 void EditorApplication::redoHistory() {
 	if (editor_mode == EDITOR_NODE_QUERY_VECTOR) {
-		property_vector_history->redo();
-		bool is_list = current_properties_types[current_property_index] == LibGens::OBJECT_ELEMENT_VECTOR_LIST;
-
-		for (int index = 0; index < property_vector_nodes.size(); ++index)
-			updateEditPropertyVectorGUI(index, is_list);
-		if (is_list)
+		if (hLookAtPointDlg)
 		{
-			updateEditPropertyVectorList(temp_property_vector_list);
-			if (hEditPropertyDlg && isVectorListSelectionValid())
+			look_at_vector_history->redo();
+			updateLookAtVectorGUI();
+		}
+		else
+		{
+			property_vector_history->redo();
+			bool is_list = current_properties_types[current_property_index] == LibGens::OBJECT_ELEMENT_VECTOR_LIST;
+
+			for (int index = 0; index < property_vector_nodes.size(); ++index)
+				updateEditPropertyVectorGUI(index, is_list);
+			if (is_list)
 			{
-				Ogre::Vector3 v = property_vector_nodes[current_vector_list_selection]->getPosition();
-				SetDlgItemText(hEditPropertyDlg, IDE_EDIT_VECTOR_LIST_X, ToString<float>(v.x).c_str());
-				SetDlgItemText(hEditPropertyDlg, IDE_EDIT_VECTOR_LIST_Y, ToString<float>(v.y).c_str());
-				SetDlgItemText(hEditPropertyDlg, IDE_EDIT_VECTOR_LIST_Z, ToString<float>(v.z).c_str());
+				updateEditPropertyVectorList(temp_property_vector_list);
+				if (hEditPropertyDlg && isVectorListSelectionValid())
+				{
+					Ogre::Vector3 v = property_vector_nodes[current_vector_list_selection]->getPosition();
+					SetDlgItemText(hEditPropertyDlg, IDE_EDIT_VECTOR_LIST_X, ToString<float>(v.x).c_str());
+					SetDlgItemText(hEditPropertyDlg, IDE_EDIT_VECTOR_LIST_Y, ToString<float>(v.y).c_str());
+					SetDlgItemText(hEditPropertyDlg, IDE_EDIT_VECTOR_LIST_Z, ToString<float>(v.z).c_str());
+				}
 			}
 		}
 	}
@@ -436,7 +461,11 @@ void EditorApplication::redoHistory() {
 
 
 void EditorApplication::pushHistory(HistoryAction *action) {
-	if (editor_mode == EDITOR_NODE_QUERY_VECTOR) property_vector_history->push(action);
+	if (editor_mode == EDITOR_NODE_QUERY_VECTOR)
+	{
+		property_vector_history->push(action);
+		look_at_vector_history->push(action);
+	}
 	else history->push(action);
 }
 
@@ -493,18 +522,6 @@ void EditorApplication::toggleRotationSnap() {
 	}
 }
 
-void EditorApplication::toggleTranslationSnap() {
-	axis->setTranslationSnap(!axis->isTranslationSnap());
-
-	const int viewMenuPos = 2;
-	HMENU hViewSubMenu = GetSubMenu(hMenu, viewMenuPos);
-
-	if (hViewSubMenu) {
-		CheckMenuItem(hViewSubMenu, IMD_TRANSLATION_SNAP, (axis->isTranslationSnap() ? MF_CHECKED : MF_UNCHECKED));
-	}
-}
-
-
 void EditorApplication::createScene(void) {
 	// Initialize LibGens Managers
 	havok_enviroment = new LibGens::HavokEnviroment(100 * 1024 * 1024);
@@ -514,6 +531,7 @@ void EditorApplication::createScene(void) {
 	havok_property_database = new LibGens::HavokPropertyDatabase(SONICGLVL_HAVOK_PROPERTY_DATABASE_PATH);
 	history                 = new History();
 	property_vector_history = new History();
+	look_at_vector_history  = new History();
 	level_database          = new EditorLevelDatabase(SONICGLVL_LEVEL_DATABASE_PATH);
 	material_library        = new LibGens::MaterialLibrary(SONICGLVL_RESOURCES_PATH);
 	model_library           = new LibGens::ModelLibrary(SONICGLVL_RESOURCES_PATH);
@@ -547,6 +565,7 @@ void EditorApplication::createScene(void) {
 	hPhysicsEditorDlg = NULL;
 	hMultiSetParamDlg = NULL;
 	hFindObjectDlg = NULL;
+	hLookAtPointDlg = NULL;
 	
 	updateVisibilityGUI();
 	updateObjectCategoriesGUI();
@@ -563,6 +582,8 @@ void EditorApplication::createScene(void) {
 	history_edit_property_wrapper = NULL;
 	cloning_mode = SONICGLVL_MULTISETPARAM_MODE_CLONE;
 	is_pick_target = false;
+	is_pick_target_position = false;
+	is_update_look_at_vector = 
 
 	// Set up Scene Managers
 	scene_manager = root->createSceneManager("OctreeSceneManager");
@@ -767,6 +788,11 @@ bool EditorApplication::keyPressed(const OIS::KeyEvent &arg) {
 		{
 			openQueryTargetMode(false);
 		}
+
+		if (is_pick_target_position)
+		{
+			queryLookAtObject(false);
+		}
 	}
 
 	// Regular Mode Shorcuts
@@ -841,18 +867,26 @@ bool EditorApplication::keyPressed(const OIS::KeyEvent &arg) {
 			}
 
 			if(arg.key == OIS::KC_G) {
-				if (!ghost_node && !camera_manager) {
-					camera_manager = new CameraManager();
-					camera_manager->addCamera(viewport->getCamera());
-					camera_manager->addCamera(viewport->getCameraOverlay());
-					camera_manager->setLevel(current_level->getLevel());
-
-					loadGhostAnimations();
-					ghost_node = new GhostNode(NULL, scene_manager, model_library, material_library);
-				}
-
+				setupGhost();
 				clearSelection();
 				editor_mode = (editor_mode == EDITOR_NODE_QUERY_GHOST ? EDITOR_NODE_QUERY_OBJECT : EDITOR_NODE_QUERY_GHOST);
+			}
+
+			if (arg.key == OIS::KC_O) {
+				editor_application->openLevelGUI();
+			}
+
+			if (arg.key == OIS::KC_S)
+			{
+				editor_application->saveLevelDataGUI();
+			}
+			if (arg.key == OIS::KC_R)
+			{
+				if (editor_mode == EDITOR_NODE_OBJECT || EDITOR_NODE_QUERY_GHOST)
+				{
+					toggleRotationSnap();
+					updateSelection();
+				}
 			}
 		}
 		else if (keyboard->isModifierDown(OIS::Keyboard::Alt))
@@ -860,6 +894,15 @@ bool EditorApplication::keyPressed(const OIS::KeyEvent &arg) {
 			if (arg.key == OIS::KC_F) {
 				if (camera_manager) {
 					camera_manager->setForceCamera(!camera_manager->getForceCamera());
+				}
+			}
+
+			if (arg.key == OIS::KC_G) 
+			{
+				if (editor_mode == EDITOR_NODE_QUERY_GHOST)
+				{
+					ghost_node->setPosition(Ogre::Vector3(viewport->getCamera()->getPosition() + viewport->getCamera()->getDirection() * 10));
+					updateSelection();
 				}
 			}
 		}
@@ -905,6 +948,10 @@ bool EditorApplication::keyPressed(const OIS::KeyEvent &arg) {
 
 		if(arg.key == OIS::KC_6) {
 			editor_application->toggleNodeVisibility(EDITOR_NODE_GHOST);
+		}
+		if (arg.key == OIS::KC_O)
+		{
+			editor_application->openLevelGUI();
 		}
 	}
 
@@ -1035,7 +1082,7 @@ bool EditorApplication::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButto
 			}
 			else if (id == OIS::MB_Left) {
 				if (current_node) {
-					if (!is_pick_target) {
+					if (!is_pick_target && !is_pick_target_position) {
 						if (!keyboard->isModifierDown(OIS::Keyboard::Ctrl)) {
 							clearSelection();
 						}
@@ -1055,14 +1102,31 @@ bool EditorApplication::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButto
 					{
 						if (current_node->getType() == EDITOR_NODE_OBJECT)
 						{
+							
 							ObjectNode* object_node = static_cast<ObjectNode*>(current_node);
 							size_t id = object_node->getObject()->getID();
 
-							bool is_list = current_properties_types[current_property_index] == LibGens::OBJECT_ELEMENT_ID_LIST;
-							int combo_box = is_list ? IDE_EDIT_ID_LIST_VALUE : IDC_EDIT_ID_VALUE;
-							SetDlgItemText(hEditPropertyDlg, combo_box, ToString<size_t>(id).c_str());
+							if (is_pick_target)
+							{
+								bool is_list = current_properties_types[current_property_index] == LibGens::OBJECT_ELEMENT_ID_LIST;
+								int combo_box = is_list ? IDE_EDIT_ID_LIST_VALUE : IDC_EDIT_ID_VALUE;
+								SetDlgItemText(hEditPropertyDlg, combo_box, ToString<size_t>(id).c_str());
 
-							setTargetName(id, is_list);
+								setTargetName(id, is_list);
+							}
+
+							if (is_pick_target_position)
+							{
+								is_update_look_at_vector = false;
+
+								Ogre::Vector3 position = object_node->getPosition();
+								SetDlgItemText(hLookAtPointDlg, IDE_LOOK_AT_X, ToString<float>(position.x).c_str());
+								SetDlgItemText(hLookAtPointDlg, IDE_LOOK_AT_Y, ToString<float>(position.y).c_str());
+								SetDlgItemText(hLookAtPointDlg, IDE_LOOK_AT_Z, ToString<float>(position.z).c_str());
+
+								updateLookAtPointVectorNode(position);
+								is_update_look_at_vector = true;
+							}
 						}
 					}
 				}
@@ -1192,6 +1256,112 @@ bool EditorApplication::frameRenderingQueued(const Ogre::FrameEvent& evt) {
     return true;
 }
 
+void EditorApplication::loadGhostRecording() 
+{
+	char filename[MAX_PATH];
+	ZeroMemory(filename, sizeof(filename));
+	OPENFILENAME ofn;
+	memset(&ofn, 0, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.lpstrFilter = "Ghost Recording(.gst.bin)\0*.gst.bin\0";
+	ofn.nFilterIndex = 1;
+	ofn.nMaxFile = 1024;
+	ofn.lpstrTitle = "Open Ghost Recording";
+	ofn.lpstrFile = filename;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_LONGNAMES | OFN_EXPLORER | OFN_ENABLESIZING;
+
+	if (!GetOpenFileName(&ofn))
+		return;
+
+	chdir(exe_path.c_str());
+	LibGens::Ghost* gst = new LibGens::Ghost(std::string(filename));
+	setGhost(gst);
+}
+
+void EditorApplication::saveGhostRecording()
+{
+	if (!ghost_data)
+		return;
+
+	char filename[MAX_PATH];
+	ZeroMemory(filename, sizeof(filename));
+	OPENFILENAME ofn;
+	memset(&ofn, 0, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.lpstrFilter = "Ghost Recording(.gst.bin)\0*.gst.bin\0";
+	ofn.nFilterIndex = 1;
+	ofn.nMaxFile = 1024;
+	ofn.lpstrTitle = "Open Ghost Recording";
+	ofn.lpstrFile = filename;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_LONGNAMES | OFN_EXPLORER | OFN_ENABLESIZING;
+
+	if (!GetSaveFileName(&ofn))
+		return;
+
+	chdir(exe_path.c_str());
+	ghost_data->save(std::string(filename));
+}
+
+void EditorApplication::launchGame()
+{
+	if (GetFileAttributes(configuration->game_path.c_str()) == INVALID_FILE_ATTRIBUTES)
+	{
+		char filename[MAX_PATH];
+		ZeroMemory(filename, sizeof(filename));
+		OPENFILENAME ofn;
+		memset(&ofn, 0, sizeof(ofn));
+		ofn.lStructSize = sizeof(ofn);
+		ofn.lpstrFilter = "Windows Executable(.exe)\0*.exe\0";
+		ofn.nFilterIndex = 1;
+		ofn.nMaxFile = 1024;
+		ofn.lpstrTitle = "Select Sonic Generations";
+		ofn.lpstrFile = filename;
+		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_LONGNAMES | OFN_EXPLORER | OFN_ENABLESIZING;
+
+		if (GetOpenFileName(&ofn))
+		{
+			chdir(exe_path.c_str());
+			configuration->game_path = std::string(ofn.lpstrFile);
+		}
+	}
+
+	string directory = configuration->game_path.substr(0, configuration->game_path.find_last_of('\\'));
+	STARTUPINFO si;
+	PROCESS_INFORMATION pi;
+	memset(&si, 0, sizeof(si));
+	memset(&pi, 0, sizeof(pi));
+	si.cb = sizeof(si);
+
+	CreateProcess(configuration->game_path.c_str(), NULL, NULL, NULL, FALSE, 0, FALSE, directory.c_str(), &si, &pi);
+}
+
+bool EditorApplication::connectGame() {
+	return game_client->Connect();
+}
+
+DWORD EditorApplication::sendMessageGame(PipeMessage* msg, size_t size) {
+	return game_client->UploadMessage(msg, size);
+}
+
+void Game_ProcessMessage(PipeClient* client, PipeMessage* msg) {
+	editor_application->processGameMessage(client, msg);
+}
+
+void EditorApplication::processGameMessage(PipeClient* client, PipeMessage* msg) {
+	switch (msg->ID)
+	{
+	case SONICGLVL_MSG_SETRECORDING:
+		isGhostRecording = ((MsgSetRecording*)msg)->Enable;
+		break;
+
+	case SONICGLVL_MSG_SAVERECORDING:
+		isGhostRecording = false;
+		MsgSaveRecording* m = (MsgSaveRecording*)msg;
+		LibGens::Ghost* gst = new LibGens::Ghost(std::string(m->FilePath));
+		setGhost(gst);
+		break;
+	}
+}
 
 void ColorListener::preRenderTargetUpdate(const Ogre::RenderTargetEvent& evt)
 {

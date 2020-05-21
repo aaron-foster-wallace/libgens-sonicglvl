@@ -689,17 +689,19 @@ namespace LibGens {
 					pfaces.push_back(base_uvs_2.size()-1);
 				}
 
+				unsigned char color[4] = { vertices[i]->rgba[3], vertices[i]->rgba[3], vertices[i]->rgba[3], 255 };
+
 				// Color
 				added=false;
 				for (size_t k=0; k<base_colors.size(); k++) {
-					if (base_colors[k] == Color(vertices[i]->rgba)) {
+					if (base_colors[k] == Color(color)) {
 						pfaces.push_back(k);
 						added=true;
 						break;
 					}
 				}
 				if (!added) {
-					base_colors.push_back(Color(vertices[i]->rgba));
+					base_colors.push_back(Color(color));
 					pfaces.push_back(base_colors.size()-1);
 				}
 			}

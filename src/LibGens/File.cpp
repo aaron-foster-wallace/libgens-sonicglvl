@@ -131,7 +131,7 @@ namespace LibGens {
 		if (!readSafeCheck(dest)) return;
 		unsigned char v=0;
 		fread(&v, sizeof(char), 1, file_ptr);
-		*dest = v / 256.0f;
+		*dest = v / 255.0f;
 	}
 
 	void File::readFloat16(float *dest) {
@@ -316,19 +316,19 @@ namespace LibGens {
 
 	void File::writeFloat8(float *dest) {
 		if (!readSafeCheck(dest)) return;
-		unsigned char v = (int)((*dest) * 256.0f);
+		unsigned char v = (int)((*dest) * 255.0f);
 		writeUChar(&v);
 	}
 
 	void File::writeFloat16(float *dest) {
 		if (!readSafeCheck(dest)) return;
-		unsigned short v = half_from_float(*dest);
+		unsigned short v = half_from_float(*(uint32_t*)dest);
 		writeInt16(&v);
 	}
 
 	void File::writeFloat16BE(float *dest) {
 		if (!readSafeCheck(dest)) return;
-		unsigned short v = half_from_float(*dest);
+		unsigned short v = half_from_float(*(uint32_t*)dest);
 		writeInt16BE(&v);
 	}
 

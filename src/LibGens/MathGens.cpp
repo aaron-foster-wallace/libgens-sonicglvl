@@ -424,49 +424,43 @@ namespace LibGens {
 		}
 	}
 
-	inline unsigned int packBits360(float value) {
-		if (value < -1.0f) {
-			value = -1.0f;
-		}
-		else if (value > 1.0f) {
-			value = 1.0f;
-		}
-
-		unsigned int bits = (unsigned int)(value * 0xFF);
-		return (bits < 0 ? 0x200 + bits : bits) & 0x1FF;
+	inline int packSnorm(float v, int N)
+	{
+		const float scale = float((1 << (N - 1)) - 1);
+	
+		float round = (v >= 0 ? 0.5f : -0.5f);
+	
+		v = (v >= -1) ? v : -1;
+		v = (v <= +1) ? v : +1;
+	
+		return int(v * scale + round);
 	}
 
 	void Vector3::writeNormal360(File *file, bool big_endian) {
-		unsigned int v = packBits360(x) << 2 | packBits360(y) << 13 | packBits360(z) << 23;
+		Vector3 v = *this;
+		v.normalise();
+
+		unsigned int value = (packSnorm(v.x, 9) << 2) | (packSnorm(v.y, 9) << 13) | (packSnorm(v.z, 9) << 23);
 
 		if (big_endian) {
-			file->writeInt32BE(&v);
+			file->writeInt32BE(&value);
 		}
 		else {
-			file->writeInt32(&v);
+			file->writeInt32(&value);
 		}
-	}
-
-	inline unsigned int packBitsForces(float value) {
-		if (value < -1.0f) {
-			value = -1.0f;
-		}
-		else if (value > 1.0f) {
-			value = 1.0f;
-		}
-
-		unsigned int bits = (unsigned int)(value * 0x1FF);
-		return (bits < 0 ? 0x400 + bits : bits) & 0x3FF;
 	}
 
 	void Vector3::writeNormalForces(File *file, bool big_endian) {
-		unsigned int v = packBitsForces(x) | packBitsForces(y) << 10 | packBitsForces(z) << 20 | (3 << 30);
+		Vector3 v = *this;
+		v.normalise();
+
+		unsigned int value = packSnorm(v.x, 10) | (packSnorm(v.y, 10) << 10) | (packSnorm(v.z, 10) << 20) | (3 << 30);
 		
 		if (big_endian) {
-			file->writeInt32BE(&v);
+			file->writeInt32BE(&value);
 		}
 		else {
-			file->writeInt32(&v);
+			file->writeInt32(&value);
 		}
 	}
 

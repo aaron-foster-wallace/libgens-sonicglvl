@@ -109,8 +109,8 @@ void EditorMaterialConverter::updateMaterialShaderParameters(LibGens::ShaderLibr
 		}
 	}
 	else {
-		pass->setVertexProgram("SysDummyVS");
-		pass->setFragmentProgram("SysDummyPS");
+		//pass->setVertexProgram("SysDummyVS");
+		//pass->setFragmentProgram("SysDummyPS");
 	}
 }
 
@@ -484,7 +484,7 @@ void EditorMaterialConverter::setShaderParameters(Ogre::Pass *pass, Ogre::GpuPro
 					program_params->setConstant((size_t)index, Ogre::Vector4(0, 0, 0, 0));
 				}
 				else {
-					MsgBox(("Unhandled constant/variable float4 " + shader_parameter_name + " with index " + ToString((int)index) + " on the Shader " + ToString(material->getShader()) + ". Handle it!").c_str());
+					//MsgBox(("Unhandled constant/variable float4 " + shader_parameter_name + " with index " + ToString((int)index) + " on the Shader " + ToString(material->getShader()) + ". Handle it!").c_str());
 				}
 			}
 			else if (slot == 2) {
@@ -554,11 +554,11 @@ void EditorMaterialConverter::setShaderParameters(Ogre::Pass *pass, Ogre::GpuPro
 				else if (shader_parameter_name == "dlscatter") {
 				}
 				else {
-					MsgBox(("Unhandled constant/variable sampler " + shader_parameter_name + " with index " + ToString((int)index) + " on the Shader " + ToString(material->getShader()) + ". Handle it!").c_str());
+					//MsgBox(("Unhandled constant/variable sampler " + shader_parameter_name + " with index " + ToString((int)index) + " on the Shader " + ToString(material->getShader()) + ". Handle it!").c_str());
 				}
 			}
 			else {
-				MsgBox(("Unhandled slot " + ToString(slot) + ". Handle it!").c_str());
+				//MsgBox(("Unhandled slot " + ToString(slot) + ". Handle it!").c_str());
 			}
 		}
 	}

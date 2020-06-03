@@ -22,6 +22,7 @@
 
 namespace LibGens {
 	Texture::Texture() {
+		flags = 0;
 	}
 
 	Texture::Texture(string filename_p, string internal_name_p) {

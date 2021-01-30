@@ -51,12 +51,17 @@ namespace LibGens {
 
 			FbxMesh *addNode(Model *model, HavokSkeletonCache *skeleton=NULL, HavokAnimationCache *animation=NULL, Matrix4 transform_matrix = Matrix4());
 			FbxMesh *addNamedNode(string name, Model *model, HavokSkeletonCache *skeleton=NULL, HavokAnimationCache *animation=NULL, Matrix4 transform_matrix = Matrix4());
+			FbxMesh *addNodeV2(Model* model, HavokSkeletonCache* skeleton, list <LibGens::HavokAnimationCache*> animation_list, Matrix4 transform_matrix = Matrix4());
+			FbxMesh *addNamedNodeV2(string name, Model* model, HavokSkeletonCache* skeleton, list <LibGens::HavokAnimationCache*> animation_list, Matrix4 transform_matrix = Matrix4());
+
+
 			FbxMesh *addTerrainInstance(TerrainInstance *instance);
 
 			void skinModelToSkeleton(Model *model, FbxMesh *model_mesh, vector<FbxNode *> &skeleton_bones, FbxAMatrix lSkinMatrix);
 			FbxNode *addHavokSkeleton(vector<FbxNode *> &skeleton_bones, hkaSkeleton *skeleton);
 			FbxNode *addHavokBone(FbxNode *parent_node, unsigned int parent_index, vector<FbxNode *> &skeleton_bones, hkaSkeleton *skeleton);
 			void addHavokAnimation(vector<FbxNode *> &skeleton_bones, hkaSkeleton *skeleton, hkaAnimationBinding *animation_binding, hkaAnimation *animation);
+			void addHavokAnimationNamed(string name, vector<FbxNode*>& skeleton_bones, hkaSkeleton* skeleton, hkaAnimationBinding* animation_binding, hkaAnimation* animation);
 			FbxMesh *addHavokCollision(string name, hkGeometry *geometry, Matrix4 transform);
 			void addSkeleton(vector<FbxNode *>& skeleton_bones, Model *model);
 			void addBone(FbxNode *parent_node, unsigned int parent_index, vector<FbxNode *>& skeleton_bones, vector<Bone *>& bones);

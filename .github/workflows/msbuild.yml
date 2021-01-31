@@ -24,7 +24,7 @@ jobs:
 
     - name: Restore NuGet packages for SonicGlvl.Mod
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: nuget restore ${{env.SOLUTION_FILE_PATH_SONICGLVL_MOD}}
+      run: nuget restore -SolutionDirectory ${{env.SOLUTION_FILE_PATH_SONICGLVL_MOD}}
       
     - name: Restore NuGet packages
       working-directory: ${{env.GITHUB_WORKSPACE}}

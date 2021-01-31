@@ -93,8 +93,9 @@ namespace LibGens {
 
 		for (list<string>::iterator it=search_paths.begin(); it!=search_paths.end(); it++) {
 			string filename=(*it) + skeleton_name + LIBGENS_HAVOK_SKELETON_EXTENSION;
-
+			cout << "testing:"<< filename << "\n";
 			if (File::check(filename)) {
+				cout << "detected:" << filename << "\n";
 				hkSerializeUtil::ErrorDetails loadError;
 				hkResource *data = hkSerializeUtil::load(filename.c_str(), &loadError);
 				if (!(loadError.id == loadError.ERRORID_NONE && data != NULL)) {
@@ -133,10 +134,10 @@ namespace LibGens {
 		}
 
 		for (list<string>::iterator it=search_paths.begin(); it!=search_paths.end(); it++) {
-//todo: hat if contains the extension , fix for absolute paths
 			string filename=(*it) + animation_name + LIBGENS_HAVOK_ANIMATION_EXTENSION;
-
+			cout << "testing:" << filename << "\n";
 			if (File::check(filename)) {
+				cout << "detected:" << filename << "\n";
 				hkSerializeUtil::ErrorDetails loadError;
 				hkResource *data = hkSerializeUtil::load(filename.c_str(), &loadError);
 				if (!(loadError.id == loadError.ERRORID_NONE && data != NULL)) {

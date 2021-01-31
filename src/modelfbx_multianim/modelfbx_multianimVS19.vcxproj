@@ -80,6 +80,7 @@
       <AdditionalIncludeDirectories>../../depends/allegro/include;../../depends/fbxsdk_2017up/include;../../depends/pthreads/include;../../depends/hk2010_2_0_r1/Source;../LibGensVS19;../LibGens-externals;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>HAVE_STRUCT_TIMESPEC;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <MinimalRebuild>true</MinimalRebuild>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

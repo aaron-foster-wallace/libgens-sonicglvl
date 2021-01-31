@@ -47,7 +47,17 @@ string getFileName(const string& s) {
 
 	return(s);
 }
+string getDirName(const string& s) {
 
+	char sep = '\\';
+
+
+	size_t i = s.rfind(sep, s.length());
+	if (i != string::npos) {
+		return(s.substr(0,i+1));
+	}
+	return("");
+}
 int main(int argc, char** argv) {
     if (argc < 2) {
 		printf("Usage: modelfbx [mesh.model] [skeleton.skl.hkx] [animation.anm.hkx] [animation1.anm.hkx]  [animation2.anm.hkx].. [animation_n.anm.hkx] [output.fbx]\n - Parameters can be in any order. You can omit any parameter for excluding elements from the output.\n");
@@ -82,46 +92,21 @@ int main(int argc, char** argv) {
 			source_skeleton.resize(pos);
 		}
 
-		/*if (((pos=parameter.find(".anm.hkx")) != string::npos) ) {
-
-			auxsource_animation = ToString(argv[i]);
-			auxsource_animation.resize(pos);
-			source_animations.push_back(auxsource_animation);
-		}*/
-
-		if (((pos = parameter.find(".anm.hkx")) != string::npos)) {
-
-			/*auxsource_animation = ToString(argv[i]);
-			auxsource_animation.resize(pos);
-			source_animations.push_back(auxsource_animation);*/
-
-			//auxsource_animation = ToString(argv[i]);
-						//auxsource_animation.resize(pos);
+		
+		if (((pos = parameter.find(LIBGENS_HAVOK_ANIMATION_EXTENSION)) != string::npos)) {
 			WIN32_FIND_DATA FindFileData;
 			HANDLE hFind;
 			hFind = FindFirstFile(argv[i], &FindFileData);
 			if (hFind != INVALID_HANDLE_VALUE)
 			{
 				do {
-
-					//DWORD  retval = 0;
-					//retval = GetFullPathName(FindFileData.cFileName,BUFSIZE,auxbuf,NULL);
-					//source_animations.push_back(ToString(auxbuf));
-					//auxbuf = new char[BUFSIZE];
-					
-					string auxsource_animation =getFileName(FindFileData.cFileName);
-					pos = auxsource_animation.find(".anm.hkx");
-					auxsource_animation.resize(pos);
-
-					//char* auxsource_animation;
-					//_splitpath(FindFileData.cFileName, NULL, NULL, auxsource_animation, NULL);
-					printf("%s  |  %s \n", FindFileData.cFileName, auxsource_animation);
-					source_animations.push_back(auxsource_animation);
+					source_animations.push_back(FindFileData.cFileName);
  				} while (FindNextFile(hFind, &FindFileData) != 0);
 
 				FindClose(hFind);
 			}
 		}
+
 		if ((parameter.find(".fbx") != string::npos) && (!output_file.size())) {
 			output_file = ToString(argv[i]);
 		}
@@ -162,16 +147,30 @@ int main(int argc, char** argv) {
 	list <LibGens::HavokAnimationCache*> havok_animation_caches;
 
 	if (source_skeleton.size()) {
-		havok_skeleton_cache = havok_enviroment.getSkeleton(source_skeleton);
+ 		string dir = getDirName(source_skeleton);
+		if (dir.size()) {
+			havok_enviroment.addFolder(dir);
+		}
+		printf("Added %s.skl.hkx from %s \n", getFileName(source_skeleton).c_str(), getDirName(source_skeleton).c_str());
+		havok_skeleton_cache = havok_enviroment.getSkeleton(getFileName(source_skeleton));
 	}
-	std::list<string>::iterator it;
-	for (it = source_animations.begin(); it != source_animations.end(); ++it) 
-	//for (string str : source_animations)
+
+	//for (std::list<string>::iterator it = source_animations.begin(); it != source_animations.end(); ++it) 
+	for (string str : source_animations)
 	{
-		string str = *it;
 		if (str.size()) {
-			auxhavok_animation_cache = havok_enviroment.getAnimation(str);
+			string dir = getDirName(str);
+			if(dir.size()){
+				havok_enviroment.addFolder(dir);
+			}
 			
+			string auxsource_animation = getFileName(str);			
+
+ 			int pos = auxsource_animation.find(LIBGENS_HAVOK_ANIMATION_EXTENSION);
+			auxsource_animation.resize(pos);
+			printf("%s\n", str.c_str());
+
+			auxhavok_animation_cache = havok_enviroment.getAnimation(auxsource_animation);
 			havok_animation_caches.push_back(auxhavok_animation_cache);
 		}
 	}

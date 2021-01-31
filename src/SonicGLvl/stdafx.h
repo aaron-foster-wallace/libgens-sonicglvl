@@ -17,34 +17,35 @@
 //    Read AUTHORS.txt, LICENSE.txt and COPYRIGHT.txt for more details.
 //=========================================================================
 
-#include "LibGens.h"
-#include <OgreCamera.h>
-#include <OgreEntity.h>
-#include <OgreLogManager.h>
-#include <OgreRoot.h>
-#include <OgreViewport.h>
-#include <OgreSceneManager.h>
-#include <OgreRenderWindow.h>
-#include <OgreConfigFile.h>
-#include <OgreWindowEventUtilities.h>
-#include <OISEvents.h>
-#include <OISInputManager.h>
-#include <OISKeyboard.h>
-#include <OISMouse.h>
-#include <SdkTrays.h>
-#include <SdkCameraMan.h>
+using namespace std;
+
+#include <stack>
+#include <list>
+#include <set>
+#include <iterator>
+#include <vector>
+#include <string>
+#include <map>
+#include <algorithm>
+#include <ctype.h>
+#include <pthread.h>
+#include "allegro5/allegro.h"
+#include "allegro5/allegro_image.h"
+#if defined(_WIN32) || defined(WIN32)
 #include <fbxsdk.h>
 #include <fbxsdk/fileio/fbxiosettings.h>
-#include <commdlg.h>
-#include <commctrl.h>
-#include "Havok.h"
-
-#if defined _M_IX86
-#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='x86' publicKeyToken='6595b64144ccf1df' language='*'\"")
-#elif defined _M_IA64
-#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='ia64' publicKeyToken='6595b64144ccf1df' language='*'\"")
-#elif defined _M_X64
-#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='amd64' publicKeyToken='6595b64144ccf1df' language='*'\"")
-#else
-#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #endif
+
+// Common Headers only should be pre-compiled
+#include "half/half.h"
+#include "sha1/sha1.h"
+#include "tinyxml/tinyxml.h"
+#include "MathGens.h"
+#include "Bitmap.h"
+#include "Error.h"
+#include "Endian.h"
+#include "File.h"
+
+#undef max
+#undef min
+#include "tristripper/tri_stripper.h"

@@ -100,7 +100,6 @@
     <ClCompile Include="Path.cpp">
       <Filter>Path</Filter>
     </ClCompile>
-    <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="Keyframe.cpp">
       <Filter>Animation</Filter>
     </ClCompile>
@@ -194,6 +193,7 @@
     <ClCompile Include="ArchiveTree.cpp">
       <Filter>Terrain</Filter>
     </ClCompile>
+    <ClCompile Include="stdafx_VS2019\stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AR.h">
@@ -280,7 +280,6 @@
     <ClInclude Include="Path.h">
       <Filter>Path</Filter>
     </ClInclude>
-    <ClInclude Include="stdafx.h" />
     <ClInclude Include="Keyframe.h">
       <Filter>Animation</Filter>
     </ClInclude>
@@ -384,6 +383,7 @@
     <ClInclude Include="Morph.h">
       <Filter>Model</Filter>
     </ClInclude>
+    <ClInclude Include="stdafx_VS2019\stdafx.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="BIXF">

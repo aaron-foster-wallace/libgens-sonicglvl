@@ -85,36 +85,36 @@ namespace LibGens {
 
 			switch ((*it).getID()) {
 				case POSITION :
-					if ((*it).getData() == FLOAT3) position.read(file);
+					if ((*it).getData() == VECTOR3) position.read(file);
 					break;
 				case BONE_WEIGHTS :
-					if ((*it).getData() == UBYTE4N) file->read(bone_weights, 4);
+					if ((*it).getData() == VECTOR4_CHAR) file->read(bone_weights, 4);
 					break;
 				case BONE_INDICES :
-					if ((*it).getData() == UBYTE4 || (*it).getData() == UBYTE4_2) file->read(bone_indices, 4);
+					if ((*it).getData() == INDICES || (*it).getData() == INDICESB) file->read(bone_indices, 4);
 					break;
 				case NORMAL :
-					if ((*it).getData() == FLOAT3) normal.read(file);
-					else if ((*it).getData() == DEC3N_360) normal.readNormal360(file);
-					else if ((*it).getData() == DEC3N) normal.readNormalForces(file);
+					if ((*it).getData() == VECTOR3) normal.read(file);
+					else if ((*it).getData() == VECTOR3_360) normal.readNormal360(file);
+					else if ((*it).getData() == VECTOR3_FORCES) normal.readNormalForces(file);
 					break;
 				case UV :
-					if ((*it).getData() == FLOAT2) uv[(*it).getIndex()].read(file);
-					else if ((*it).getData() == FLOAT2_HALF) uv[(*it).getIndex()].readHalf(file);
+					if ((*it).getData() == VECTOR2) uv[(*it).getIndex()].read(file);
+					else if ((*it).getData() == VECTOR2_HALF) uv[(*it).getIndex()].readHalf(file);
 					break;
 				case BINORMAL :
-					if ((*it).getData() == FLOAT3) binormal.read(file);
-					else if ((*it).getData() == DEC3N_360) binormal.readNormal360(file);
-					else if ((*it).getData() == DEC3N) binormal.readNormalForces(file);
+					if ((*it).getData() == VECTOR3) binormal.read(file);
+					else if ((*it).getData() == VECTOR3_360) binormal.readNormal360(file);
+					else if ((*it).getData() == VECTOR3_FORCES) binormal.readNormalForces(file);
 					break;
 				case TANGENT :
-					if ((*it).getData() == FLOAT3) tangent.read(file);
-					else if ((*it).getData() == DEC3N_360) tangent.readNormal360(file);
-					else if ((*it).getData() == DEC3N) tangent.readNormalForces(file);
+					if ((*it).getData() == VECTOR3) tangent.read(file);
+					else if ((*it).getData() == VECTOR3_360) tangent.readNormal360(file);
+					else if ((*it).getData() == VECTOR3_FORCES) tangent.readNormalForces(file);
 					break;
-				case COLOR :
-					if ((*it).getData() == FLOAT4) color.read(file, true);
-					else if ((*it).getData() == UBYTE4N) color.readABGR8(file);
+				case RGBA :
+					if ((*it).getData() == VECTOR4) color.read(file, true);
+					else if ((*it).getData() == VECTOR4_CHAR) color.readABGR8(file);
 					break;
 			}
 		}
@@ -138,36 +138,36 @@ namespace LibGens {
 
 			switch ((*it).getID()) {
 				case POSITION :
-					if ((*it).getData() == FLOAT3) position.write(file);
+					if ((*it).getData() == VECTOR3) position.write(file);
 					break;
 				case BONE_WEIGHTS :
-					if ((*it).getData() == UBYTE4N) file->write(bone_weights, 4);
+					if ((*it).getData() == VECTOR4_CHAR) file->write(bone_weights, 4);
 					break;
 				case BONE_INDICES :
-					if ((*it).getData() == UBYTE4 || (*it).getData() == UBYTE4_2) file->write(bone_indices, 4);
+					if ((*it).getData() == INDICES || (*it).getData() == INDICESB) file->write(bone_indices, 4);
 					break;
 				case NORMAL :
-					if ((*it).getData() == FLOAT3) normal.write(file);
-					else if ((*it).getData() == DEC3N_360) normal.writeNormal360(file);
-					else if ((*it).getData() == DEC3N) normal.writeNormalForces(file);
+					if ((*it).getData() == VECTOR3) normal.write(file);
+					else if ((*it).getData() == VECTOR3_360) normal.writeNormal360(file);
+					else if ((*it).getData() == VECTOR3_FORCES) normal.writeNormalForces(file);
 					break;
 				case UV :
-					if ((*it).getData() == FLOAT2) uv[(*it).getIndex()].write(file);
-					else if ((*it).getData() == FLOAT2_HALF) uv[(*it).getIndex()].writeHalf(file);
+					if ((*it).getData() == VECTOR2) uv[(*it).getIndex()].write(file);
+					else if ((*it).getData() == VECTOR2_HALF) uv[(*it).getIndex()].writeHalf(file);
 					break;
 				case BINORMAL :
-					if ((*it).getData() == FLOAT3) binormal.write(file);
-					else if ((*it).getData() == DEC3N_360) binormal.writeNormal360(file);
-					else if ((*it).getData() == DEC3N) binormal.writeNormalForces(file);
+					if ((*it).getData() == VECTOR3) binormal.write(file);
+					else if ((*it).getData() == VECTOR3_360) binormal.writeNormal360(file);
+					else if ((*it).getData() == VECTOR3_FORCES) binormal.writeNormalForces(file);
 					break;
 				case TANGENT :
-					if ((*it).getData() == FLOAT3) tangent.write(file);
-					else if ((*it).getData() == DEC3N_360) tangent.writeNormal360(file);
-					else if ((*it).getData() == DEC3N) tangent.writeNormalForces(file);
+					if ((*it).getData() == VECTOR3) tangent.write(file);
+					else if ((*it).getData() == VECTOR3_360) tangent.writeNormal360(file);
+					else if ((*it).getData() == VECTOR3_FORCES) tangent.writeNormalForces(file);
 					break;
-				case COLOR :
-					if ((*it).getData() == FLOAT4) color.write(file, true);
-					else if ((*it).getData() == UBYTE4N) color.writeABGR8(file);
+				case RGBA :
+					if ((*it).getData() == VECTOR4) color.write(file, true);
+					else if ((*it).getData() == VECTOR4_CHAR) color.writeABGR8(file);
 					break;
 			}
 		}
@@ -182,23 +182,23 @@ namespace LibGens {
 		for (list<VertexFormatElement>::iterator it=elements.begin(); it!=elements.end(); it++) {
 			(*it).setOffset((*it).getOffset() + current_offset);
 
-			if ((*it).getData() == DEC3N_360 || (*it).getData() == DEC3N) {
-				(*it).setData(FLOAT3);
+			if ((*it).getData() == VECTOR3_360 || (*it).getData() == VECTOR3_FORCES) {
+				(*it).setData(VECTOR3);
 				current_offset += 8;
 			}
 
-			else if ((*it).getData() == FLOAT2_HALF) {
-				(*it).setData(FLOAT2);
+			else if ((*it).getData() == VECTOR2_HALF) {
+				(*it).setData(VECTOR2);
 				current_offset += 4;
 			}
 
-			else if (((*it).getData() == UBYTE4N) && ((*it).getID() == COLOR)) {
-				(*it).setData(FLOAT4);
+			else if (((*it).getData() == VECTOR4_CHAR) && ((*it).getID() == RGBA)) {
+				(*it).setData(VECTOR4);
 				current_offset += 12;
 			}
 
-			else if ((*it).getData() == UBYTE4_2) {
-				(*it).setData(UBYTE4);
+			else if ((*it).getData() == INDICESB) {
+				(*it).setData(INDICES);
 			}
 		}
 

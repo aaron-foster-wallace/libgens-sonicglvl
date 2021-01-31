@@ -45,8 +45,6 @@ namespace LibGens {
 
 	
 	HavokPhysicsCache *HavokEnviroment::getPhysics(string physics_name) {
-		//todo: hat if contains the extension , fix for absolute paths
-
 		for (list<HavokPhysicsCache *>::iterator it=physics_cache.begin(); it!=physics_cache.end(); it++) {
 			if ((*it)->getName() == physics_name) {
 				return (*it);
@@ -83,8 +81,6 @@ namespace LibGens {
 
 
 	HavokSkeletonCache *HavokEnviroment::getSkeleton(string skeleton_name) {
-		//todo: hat if contains the extension , fix for absolute paths
-
 		for (list<HavokSkeletonCache *>::iterator it=skeleton_cache.begin(); it!=skeleton_cache.end(); it++) {
 			if ((*it)->getName() == skeleton_name) {
 				return (*it);
@@ -133,7 +129,6 @@ namespace LibGens {
 		}
 
 		for (list<string>::iterator it=search_paths.begin(); it!=search_paths.end(); it++) {
-//todo: hat if contains the extension , fix for absolute paths
 			string filename=(*it) + animation_name + LIBGENS_HAVOK_ANIMATION_EXTENSION;
 
 			if (File::check(filename)) {

@@ -448,6 +448,11 @@ namespace LibGens {
 		file->writeString(&sub_shader);
 		texset_name_address = file->getCurrentAddress();
 		file->writeString(&texset_name);
+
+		// HACK: We store our own layer information right after the sub shader string. Does not affect game at all.
+		file->writeString(&layer);
+		file->writeNull(1);
+
 		file->fixPadding();
 
 		// Parameters

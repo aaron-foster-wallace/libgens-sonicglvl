@@ -191,3 +191,5 @@ FakesAssemblies/
 .vs/
 bin/database_gens
 database
+*.ipdb
+*.iobj

@@ -494,9 +494,13 @@ bool GIWindow::convert() {
 					}
 
 					QString lightmap_filename = converter_settings.source_gi_directory + "/" + subtexture_name + "_lightmap.png";
+					QString sg_filename = converter_settings.source_gi_directory + "/" + subtexture_name + "_sg.png";
 					QString shadowmap_filename = converter_settings.source_gi_directory + "/" + subtexture_name + "_shadowmap.png";
 					if (QFileInfo(lightmap_filename).exists())
 						import_subtexture_lightmaps[subtexture_name] = lightmap_filename;
+
+					if (QFileInfo(sg_filename).exists())
+						import_subtexture_lightmaps[subtexture_name] = sg_filename;
 
 					if (QFileInfo(shadowmap_filename).exists())
 						import_subtexture_shadowmaps[subtexture_name] = shadowmap_filename;
@@ -640,6 +644,8 @@ bool GIWindow::convert() {
 													scaled_image.save(target_lightmap_filename);
 												}
 											}
+
+											(*it2)->setUserFlag(import_subtexture_lightmaps[subtexture_name].endsWith("_sg.png"));
 										}
 										// Otherwise, extract the existing content of the image.
 										else {
@@ -672,6 +678,7 @@ bool GIWindow::convert() {
 								clone_subtexture->setPixelWidth(scaled_width);
 								clone_subtexture->setPixelHeight(scaled_height);
 								clone_subtexture->setName(subtexture_name.toStdString());
+								clone_subtexture->setUserFlag((*it2)->getUserFlag());
 								max_atlas_texture_size = max(max_atlas_texture_size, scaled_width);
 								max_atlas_texture_size = max(max_atlas_texture_size, scaled_height);
 								group->addSubtextureToOrganize(clone_subtexture);
@@ -1071,7 +1078,9 @@ bool GIWindow::packGenerations(QString output_path, QString output_name, QString
 		foreach(QString entry, entry_list) {
 			// Compress all AR files that have gia in their filename, since they were just created by the converter.
 			QString entry_filename = (stage_path + "/" + entry);
-			compressFileCAB(entry_filename);
+			if (converter_settings.compress_groups) {
+			    compressFileCAB(entry_filename);
+			}
 			stage_ar_pack.addFile(entry_filename.toStdString());
 			logProgress(ProgressNormal, "Added " + entry + " to Stage.pfd.");
 		}
@@ -1090,7 +1099,9 @@ bool GIWindow::packGenerations(QString output_path, QString output_name, QString
 		foreach(QString entry, entry_list) {
 			// Compress all AR files that have gia in their filename, since they were just created by the converter.
 			QString entry_filename = (stage_add_path + "/" + entry);
-			compressFileCAB(entry_filename);
+			if (converter_settings.compress_groups) {
+			    compressFileCAB(entry_filename);
+			}
 			stage_add_ar_pack.addFile(entry_filename.toStdString());
 			logProgress(ProgressNormal, "Added " + entry + " to Stage-Add.pfd.");
 		}

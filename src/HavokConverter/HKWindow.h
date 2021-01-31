@@ -88,6 +88,7 @@ private:
 	void logNodeTree(aiNode *node, QString prefix);
 	void beep();
 	hkpShape *convertMeshToShape(aiMesh *mesh, LibGens::Vector3 scale);
+	hkpShape* convertMeshToBoxShape(aiMesh* mesh, LibGens::Vector3& position, LibGens::Vector3 scale);
 	QList<hkpRigidBody *> convertNodeToRigidBodies(const aiScene *scene, aiNode *node, LibGens::Matrix4 transform);
 	void convertNodeTree(const aiScene *scene, aiNode *node, LibGens::Matrix4 parent_transform, hkpWorld *world);
 #ifdef HAVOKCONVERTER_LOST_WORLD

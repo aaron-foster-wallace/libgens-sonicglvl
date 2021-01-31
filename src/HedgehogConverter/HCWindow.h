@@ -30,6 +30,7 @@
 struct ModelRecord {
 	LibGens::AABB aabb;
 	QList<int> used_meshes;
+	unsigned int submesh_counts[3];
 };
 
 struct SceneData {
@@ -76,6 +77,7 @@ private:
 		bool copy_and_convert_textures;
 		bool force_tags_layers;
 		bool use_model_groups;
+		bool compress_groups;
 		bool remove_model_tags;
 		bool remove_material_tags;
 		bool convert_lights;

@@ -42,6 +42,7 @@
 #include "Terrain.h"
 #include "TerrainBlock.h"
 #include "Light.h"
+#include "GITextureGroup.h"
 #include "HCMaterialDialog.h"
 
 const int HCWindow::BaseUnassignedGroupIndex = 0x800000;
@@ -189,6 +190,7 @@ bool HCWindow::convert() {
 	SceneData scene_data;
 	QStringList textures_to_copy;
 	QStringList textures_to_convert;
+	LibGens::LightList light_list;
 
 	// Load all materials from temporary directory into memory
 	QStringList material_entry_list = temp_dir.entryList(QStringList() << "*.material");
@@ -197,7 +199,170 @@ bool HCWindow::convert() {
 		scene_data.materials.push_back(load_material);
 	}
 
+	//****************//
+	// Process lights //
+	//****************//
 	foreach(QString model_source_path, model_source_paths) {
+		if (!model_source_path.endsWith(".light", Qt::CaseInsensitive)) {
+			continue;
+		}
+
+		QFileInfo file_info(model_source_path);
+
+		if (!file_info.exists()) {
+			logProgress(ProgressError, QString("Could not find light: %1").arg(model_source_path));
+			continue;
+		}
+
+		LibGens::Light* light = new LibGens::Light(model_source_path.toStdString());
+		light->setName(file_info.completeBaseName().toStdString());
+
+		string output_file_path = temp_path.toStdString() + "/" + light->getName() + ".light";
+		light->save(output_file_path);
+
+		light_list.addLight(light);
+
+		logProgress(ProgressNormal, QString("Loaded light and saved it to %1").arg(output_file_path.c_str()));
+	}
+
+	//*****************************************//
+	// Process terrain models & instance infos //
+	//*****************************************//
+
+	QMap<QString, LibGens::TerrainInstance*> instance_map;
+
+	foreach(QString model_source_path, model_source_paths) {
+		if (!model_source_path.endsWith(".terrain-instanceinfo", Qt::CaseInsensitive)) {
+			continue;
+		}
+
+		if (!QFileInfo(model_source_path).exists()) {
+			logProgress(ProgressError, QString("Could not find terrain instance info: %1").arg(model_source_path));
+			continue;
+		}
+
+		LibGens::TerrainInstance* instance = new LibGens::TerrainInstance(model_source_path.toStdString());
+		instance->setMatrix(global_transform * instance->getMatrix());
+
+		instance_map.insertMulti(instance->getModelName().c_str(), instance);
+		scene_data.instances.insertMulti(-1, instance);
+
+		logProgress(ProgressNormal, QString("Loaded terrain instance info from %1").arg(model_source_path));
+	}
+
+	foreach(QString model_source_path, model_source_paths) {
+		if (!model_source_path.endsWith(".terrain-model", Qt::CaseInsensitive)) {
+			continue;
+		}
+
+		if (!QFileInfo(model_source_path).exists()) {
+			logProgress(ProgressError, QString("Could not find terrain model: %1").arg(model_source_path));
+			continue;
+		}
+
+		LibGens::Model model(model_source_path.toStdString());
+
+		QString model_name = QString(model.getName().c_str());
+		QString model_directory_path = QFileInfo(model_source_path).absoluteDir().absolutePath();
+
+		auto it = instance_map.find(model_name);
+		if (it == instance_map.end()) {
+			LibGens::AABB aabb = model.getAABB();
+			aabb.transform(global_transform);
+
+			LibGens::TerrainInstance* instance = new LibGens::TerrainInstance();
+			instance->buildMeshes(&model, &light_list);
+			instance->setName(model.getName());
+			instance->setModelName(model.getName());
+			instance->setMatrix(global_transform);
+			instance->setAABB(aabb);
+
+			string output_file_path = temp_path.toStdString() + "/" + instance->getName() + ".terrain-instanceinfo";
+			instance->save(output_file_path);
+			logProgress(ProgressNormal, QString("Created terrain instance info for standalone terrain model and saved it to %1").arg(output_file_path.c_str()));
+
+			scene_data.instances.insertMulti(-1, instance);
+		}
+		else {
+		    for (; it != instance_map.end() && it.key() == model_name; ++it) {
+				LibGens::TerrainInstance* instance = it.value();
+
+				LibGens::AABB aabb = model.getAABB();
+				aabb.transform(instance->getMatrix());
+
+				instance->setAABB(aabb);
+				instance->buildMeshes(&model, &light_list);
+
+				string output_file_path = temp_path.toStdString() + "/" + instance->getName() + ".terrain-instanceinfo";
+				instance->save(output_file_path);
+
+				logProgress(ProgressNormal, QString("Saved terrain instance info to %1").arg(output_file_path.c_str()));
+		    }
+		}
+
+		list<string> material_names = model.getMaterialNames();
+		for (auto it = material_names.begin(); it != material_names.end(); ++it) {
+			bool found = false;
+			for (auto it2 = scene_data.materials.begin(); it2 != scene_data.materials.end(); ++it2) {
+				if ((*it2)->getName() == *it) {
+					found = true;
+					break;
+				}
+			}
+
+			if (found)
+				continue;
+
+			QString material_file_path = QString("%1/%2.material").arg(model_directory_path, (*it).c_str());
+
+			found = QFileInfo(material_file_path).exists();
+			if (!found) {
+			    foreach(QString texture_search_path, texture_search_paths) {
+					material_file_path = QString("%1/%2.material").arg(texture_search_path, (*it).c_str());
+					found = QFileInfo(material_file_path).exists();
+
+					if (found)
+						break;
+			    }
+			}
+
+			if (found) {
+				LibGens::Material* material = new LibGens::Material(material_file_path.toStdString());
+				material->setName(*it);
+
+				string output_file_path = temp_path.toStdString() + "/" + *it + ".material";
+				material->save(output_file_path);
+				logProgress(ProgressNormal, QString("Loaded material and saved it to %1").arg(output_file_path.c_str()));
+
+				scene_data.materials.push_back(material);
+
+				vector<LibGens::Texture*> textures = material->getTextureUnits();
+				for (auto it2 = textures.begin(); it2 != textures.end(); ++it2) {
+					textures_to_copy.push_back(QString("%1/%2.dds").arg(model_directory_path).arg((*it2)->getName().c_str()));
+				}
+			}
+			else {
+				logProgress(ProgressError, QString("Could not find material: %1").arg((*it).c_str()));
+			}
+		}
+
+		model.fixVertexFormatForPC();
+
+		scene_data.model_size_map.insert(model.getName(), model.getEstimatedMemorySize());
+
+		string output_file_path = temp_path.toStdString() + "/" + model.getName() + ".terrain-model";
+		model.save(output_file_path);
+
+		logProgress(ProgressNormal, QString("Loaded terrain model and saved it to %1").arg(output_file_path.c_str()));
+	}
+
+	foreach(QString model_source_path, model_source_paths) {
+		if (model_source_path.endsWith(".terrain-model", Qt::CaseInsensitive) || 
+			model_source_path.endsWith(".terrain-instanceinfo", Qt::CaseSensitive) ||
+			model_source_path.endsWith(".light", Qt::CaseInsensitive)) {
+			continue;
+		}
+
 		logProgress(ProgressNormal, "Assimp importer reading model " + model_source_path + " ...");
 
 		Assimp::Importer importer;
@@ -221,14 +386,9 @@ bool HCWindow::convert() {
 		logProgress(ProgressNormal, QString("* Textures: %1").arg(scene->mNumTextures));
 		logProgress(ProgressNormal, QString("* Node Tree:"));
 		logNodeTree(scene->mRootNode, "**");
-
-		// FIXME: Hardly any format supports lights correctly. We're better off looking for another solution.
-
-		/*
+		
 		int lights_count = scene->mNumLights;
 		if (lights_count && converter_settings.convert_lights) {
-			LibGens::LightList light_list;
-
 			for (int l = 0; l < lights_count; l++) {
 				aiLight *scene_light = scene->mLights[l];
 				aiVector3D position = scene_light->mPosition;
@@ -296,13 +456,8 @@ bool HCWindow::convert() {
 					logProgress(ProgressError, QString("The light type %1 of %2 isn't supported.").arg(scene_light->mType).arg(scene_light->mName.C_Str()));
 				}
 			}
-
-			if (light_list.getLightCount()) {
-				light_list.save(temp_path.toStdString() + "/" + LIBGENS_LIGHT_LIST_FILENAME);
-				logProgress(ProgressNormal, QString("Saved light list with %1 lights.").arg(light_list.getLightCount()));
-			}
 		}
-		*/
+		
 
 		//**********************************************************
 		//  Dump embedded textures to another temporary directory
@@ -615,6 +770,9 @@ bool HCWindow::convert() {
 		foreach(QString texture_search_path, texture_search_paths) {
 			foreach(QString texture_filename, textures_to_copy) {
 				QString source_file = texture_search_path + "/" + QFileInfo(texture_filename).fileName();
+				if (!QFileInfo(source_file).exists())
+					source_file = texture_filename; // Try file name itself
+
 				if (QFileInfo(source_file).exists()) {
 					textures_to_copy.removeAll(texture_filename);
 
@@ -685,6 +843,11 @@ bool HCWindow::convert() {
 	//  Generate Terrain Files
 	//*************************
 	if ((converter_settings.game_engine == Generations) || (converter_settings.game_engine == Unleashed)) {
+		if (light_list.getLightCount()) {
+			light_list.save(temp_path.toStdString() + "/" + LIBGENS_LIGHT_LIST_FILENAME);
+			logProgress(ProgressNormal, QString("Saved light list with %1 lights.").arg(light_list.getLightCount()));
+		}
+
 		if (terrain_groups.size()) {
 			logProgress(ProgressNormal, QString("%1 terrain groups were generated.").arg(terrain_groups.size()));
 
@@ -755,6 +918,24 @@ bool HCWindow::convert() {
 			logProgress(ProgressNormal, QString("Saved terrain block to %1.").arg(terrain_block_filename.c_str()));
 
 			delete terrain_block;
+
+			if (!converter_settings.merge_existing) {
+				LibGens::GITextureGroupInfo gi_texture_group_info;
+				foreach(LibGens::TerrainGroup* group, terrain_groups) {
+					list<LibGens::TerrainInstance*> instances = group->getInstances();
+					for (auto it = instances.begin(); it != instances.end(); ++it) {
+						gi_texture_group_info.addInstance((*it)->getName(), (*it)->getAABB().center(), (*it)->getAABB().sizeMax() / 2);
+					}
+				}
+
+				string output_file_path = temp_path.toStdString() + "/gi-texture.gi-texture-group-info";
+				gi_texture_group_info.save(output_file_path);
+				logProgress(ProgressNormal, QString("Saved GI texture group info to %1").arg(output_file_path.c_str()));
+
+				output_file_path = temp_path.toStdString() + "/gi-lim.gil";
+				gi_texture_group_info.saveMipLevelLimitFile(output_file_path, false, false, true);
+				logProgress(ProgressNormal, QString("Saved GI mip level limit file to %1").arg(output_file_path.c_str()));
+			}
 		}
 		else {
 			logProgress(ProgressError, "No terrain groups were generated.");
@@ -891,6 +1072,12 @@ bool HCWindow::convertSceneNode(const aiScene *scene, aiNode *node, QString path
 					logProgress(ProgressWarning, QString("Detected %1 as duplicate model name. Renamed to %2.").arg(model_base_name).arg(model_name));
 				}
 
+				ModelRecord record;
+				record.used_meshes = mesh_indices;
+				for (int i = 0; i < LIBGENS_MODEL_SUBMESH_SLOTS; i++) {
+					record.submesh_counts[i] = 0;
+				}
+
 				LibGens::Model *model = new LibGens::Model();
 				model->setName(model_name.toStdString());
 				model->setTerrainMode(true);
@@ -1017,6 +1204,11 @@ bool HCWindow::convertSceneNode(const aiScene *scene, aiNode *node, QString path
 
 						mesh->addSubmesh(submesh, submesh_slot);
 
+						// Increment the count in model record
+						if (submesh_slot < LIBGENS_MODEL_SUBMESH_ROOT_SLOTS) {
+							record.submesh_counts[submesh_slot]++;
+						}
+
 						logProgress(ProgressNormal, QString("Converted submesh and added to slot %1, with %2 resulting vertices and %3 resulting indices.").arg(submesh_slot).arg(submesh->getVerticesSize()).arg(submesh->getFacesIndicesSize()));
 					}
 				}
@@ -1028,8 +1220,6 @@ bool HCWindow::convertSceneNode(const aiScene *scene, aiNode *node, QString path
 				model->save(model_filename.toStdString());
 				logProgress(ProgressNormal, QString("Saved model to %1.").arg(model_filename));
 
-				ModelRecord record;
-				record.used_meshes = mesh_indices;
 				record.aabb = model->getAABB();
 				scene_data.model_map[model_name] = record;
 
@@ -1069,6 +1259,17 @@ bool HCWindow::convertSceneNode(const aiScene *scene, aiNode *node, QString path
 			LibGens::AABB instance_aabb = scene_data.model_map[existing_model_name].aabb;
 			instance_aabb.transform(instance_matrix);
 			instance->setAABB(instance_aabb);
+
+			// Create an empty mesh for the instance using the count info in record
+			LibGens::TerrainInstanceMesh *instance_mesh = new LibGens::TerrainInstanceMesh();
+			for (int i = 0; i < LIBGENS_MODEL_SUBMESH_ROOT_SLOTS; i++) {
+				for (unsigned int j = 0; j < scene_data.model_map[existing_model_name].submesh_counts[i]; j++) {
+					LibGens::TerrainInstanceSubmesh *instance_submesh = new LibGens::TerrainInstanceSubmesh();
+					instance_mesh->addSubmesh(instance_submesh, i);
+				}
+			}
+			instance->addMesh(instance_mesh);
+
 			instance->save(instance_filename.toStdString());
 			scene_data.instances.insertMulti(parent_group_id, instance);
 
@@ -1204,27 +1405,37 @@ bool HCWindow::packGenerations(QList<LibGens::TerrainGroup *> &terrain_groups, Q
 				}
 			}
 
-			tg_ar.save(group_filename.toStdString());
+			tg_ar.save(group_filename.toStdString(), 16);
 
-			logProgress(ProgressNormal, QString("Compressing %1 with CAB Compression.").arg(group_filename));
+			if (converter_settings.compress_groups) {
+			    logProgress(ProgressNormal, QString("Compressing %1 with CAB Compression.").arg(group_filename));
 
-			QStringList arguments;
-			arguments << group_filename << group_filename;
-			QProcess conversion_process;
-			conversion_process.start("makecab", arguments);
-			conversion_process.waitForFinished();
-			QString conversion_output = conversion_process.readAllStandardOutput();
-			logProgress(ProgressNormal, QString("Cabinet Maker Output: " + conversion_output));
+			    QStringList arguments;
+			    arguments << group_filename << group_filename;
+			    QProcess conversion_process;
+			    conversion_process.start("makecab", arguments);
+			    conversion_process.waitForFinished();
+			    QString conversion_output = conversion_process.readAllStandardOutput();
+			    logProgress(ProgressNormal, QString("Cabinet Maker Output: " + conversion_output));
+		    }
 
 			stage_pfd_pack.addFile(group_filename.toStdString());
 			logProgress(ProgressNormal, "Saving terrain group to " + group_filename + "...");
 		}
 
 		// Save PFD files
-		stage_pfd_pack.save(output_stage_pfd_path);
+		stage_pfd_pack.save(output_stage_pfd_path, 2048);
 		logProgress(ProgressNormal, "Packed Stage.pfd");
 		stage_pfd_pack.savePFI(path.toStdString() + "/Stage.pfi");
 		logProgress(ProgressNormal, "Saved Stage.pfi");
+
+		if (!converter_settings.merge_existing) {
+			LibGens::ArPack stage_add_pfd_pack;
+			stage_add_pfd_pack.save(output_path.toStdString() + "/Stage-Add.pfd");
+			logProgress(ProgressNormal, "Saved empty Stage-Add.pfd");
+			stage_add_pfd_pack.savePFI(path.toStdString() + "/Stage-Add.pfi");
+			logProgress(ProgressNormal, "Saved Stage-Add.pfi");
+		}
 	}
 
 	// Delete all terrain model and instances from the resources directory
@@ -1249,7 +1460,7 @@ bool HCWindow::packGenerations(QList<LibGens::TerrainGroup *> &terrain_groups, Q
 	}
 
 	QString resources_pack_filename = QString("%1/%2.ar.00").arg(output_path).arg(output_name);
-	resources_pack.save(resources_pack_filename.toStdString());
+	resources_pack.save(resources_pack_filename.toStdString(), 16);
 	logProgress(ProgressNormal, "Saved " + resources_pack_filename + ".");
 	return true;
 }

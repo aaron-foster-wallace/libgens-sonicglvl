@@ -40,8 +40,10 @@ dlldata.c
 *.ilk
 *.meta
 *.obj
+*.iobj
 *.pch
 *.pdb
+*.ipdb
 *.pgc
 *.pgd
 *.rsp
@@ -189,3 +191,5 @@ FakesAssemblies/
 .vs/
 bin/database_gens
 database
+*.ipdb
+*.iobj

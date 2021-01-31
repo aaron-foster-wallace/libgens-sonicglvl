@@ -327,7 +327,7 @@ void EditorApplication::createDirectionalLight(LibGens::Light *direct_light) {
 	SONICGLVL_SHADER_LIBRARY->setGlobalLightColor(light_color);
 
 	global_directional_light = scene_manager->createLight(direct_light->getName());
-	global_directional_light->setSpecularColour(Ogre::ColourValue::White);
+	global_directional_light->setSpecularColour(Ogre::ColourValue(light_color.x, light_color.y, light_color.z));
 	global_directional_light->setDiffuseColour(Ogre::ColourValue(light_color.x, light_color.y, light_color.z));
 	global_directional_light->setType(Ogre::Light::LT_DIRECTIONAL);
 	global_directional_light->setDirection(Ogre::Vector3(-light_direction.x, -light_direction.y, -light_direction.z));

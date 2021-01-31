@@ -190,7 +190,7 @@ namespace LibGens {
 							v->uv[set] = Vector2(uv[0], 1.0-uv[1]);
 						}
 
-						for (size_t c=0; c<vertex_color_count; c++) {
+						for (int c=0; c<vertex_color_count; c++) {
 							FbxGeometryElementVertexColor* lVertexColor = lMesh->GetElementVertexColor(c);
 							
 							if ((lVertexColor->GetMappingMode() == FbxGeometryElement::eByPolygonVertex) && (lVertexColor->GetReferenceMode() == FbxGeometryElement::eIndexToDirect)) {
@@ -307,10 +307,10 @@ namespace LibGens {
 			object->index_tables.push_back(sonic_index_table);
 
 			triangle_stripper::indices tri_indices;
-			for (size_t i=0; i<indices_output[split].size(); i+=3) {
+			for (size_t i = 0; i < indices_output[split].size(); i += 3) {
 				tri_indices.push_back(indices_output[split][i]);
-				tri_indices.push_back(indices_output[split][i+1]);
-				tri_indices.push_back(indices_output[split][i+2]);
+				tri_indices.push_back(indices_output[split][i + 1]);
+				tri_indices.push_back(indices_output[split][i + 2]);
 			}
 
 			triangle_stripper::tri_stripper stripper(tri_indices);
@@ -319,18 +319,18 @@ namespace LibGens {
 			triangle_stripper::primitive_vector out_vector;
 			stripper.Strip(&out_vector);
 
-			for (size_t i=0; i<out_vector.size(); i+=1) {
+			for (size_t i = 0; i < out_vector.size(); i += 1) {
 				if (out_vector[i].Type == triangle_stripper::TRIANGLE_STRIP) {
-					for (size_t j=0; j<out_vector[i].Indices.size(); j++) {
+					for (size_t j = 0; j < out_vector[i].Indices.size(); j++) {
 						sonic_index_table->indices.push_back(out_vector[i].Indices[j]);
 					}
 					sonic_index_table->strip_sizes.push_back(out_vector[i].Indices.size());
 				}
 				else {
-					for (size_t j=0; j<out_vector[i].Indices.size(); j+=3) {
+					for (size_t j = 0; j < out_vector[i].Indices.size(); j += 3) {
 						sonic_index_table->indices.push_back(out_vector[i].Indices[j]);
-						sonic_index_table->indices.push_back(out_vector[i].Indices[j+1]);
-						sonic_index_table->indices.push_back(out_vector[i].Indices[j+2]);
+						sonic_index_table->indices.push_back(out_vector[i].Indices[j + 1]);
+						sonic_index_table->indices.push_back(out_vector[i].Indices[j + 2]);
 						sonic_index_table->strip_sizes.push_back(3);
 					}
 				}

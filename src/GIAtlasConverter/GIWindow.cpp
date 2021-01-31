@@ -89,6 +89,7 @@ GIWindow::GIWindow(QWidget *parent) : QMainWindow(parent) {
 		converter_settings.quality_size_multiplier = 16.0;
 		converter_settings.max_texture_size = 1024;
 		converter_settings.max_atlas_texture_size = 2048;
+		converter_settings.compress_groups = true;
 		converter_settings.no_gi_nodes = true;
 		converter_settings.inverted_shadowmaps = false;
 		converter_settings.scale_to_atlasinfo = true;
@@ -137,6 +138,7 @@ void GIWindow::loadSettings(QString filename) {
 	converter_settings.quality_size_multiplier = settings.value("quality_size_multiplier", 0).toDouble();
 	converter_settings.max_texture_size = settings.value("max_texture_size", 0).toInt();
 	converter_settings.max_atlas_texture_size = settings.value("max_atlas_texture_size", 2048).toInt();
+	converter_settings.compress_groups = settings.value("compress_groups", true).toBool();
 	converter_settings.no_gi_nodes = settings.value("no_gi_nodes", false).toBool();
 	converter_settings.inverted_shadowmaps = settings.value("inverted_shadowmaps", false).toBool();
 	converter_settings.scale_to_atlasinfo = settings.value("scale_to_atlasinfo", false).toBool();
@@ -165,6 +167,7 @@ void GIWindow::saveSettings(QString filename) {
 	settings.setValue("quality_size_multiplier", converter_settings.quality_size_multiplier);
 	settings.setValue("max_texture_size", converter_settings.max_texture_size);
 	settings.setValue("max_atlas_texture_size", converter_settings.max_atlas_texture_size);
+	settings.setValue("compress_groups", converter_settings.compress_groups);
 	settings.setValue("no_gi_nodes", converter_settings.no_gi_nodes);
 	settings.setValue("inverted_shadowmaps", converter_settings.inverted_shadowmaps);
 	settings.setValue("scale_to_atlasinfo", converter_settings.scale_to_atlasinfo);
@@ -192,6 +195,7 @@ void GIWindow::updateSettingsFromUi() {
 	converter_settings.quality_size_multiplier = dsb_quality_size_multiplier->value();
 	converter_settings.max_texture_size = sb_max_texture_size->value();
 	converter_settings.max_atlas_texture_size = sb_max_atlas_texture_size->value();
+	converter_settings.compress_groups = chk_compress_groups->isChecked();
 	converter_settings.no_gi_nodes = chk_no_gi_nodes->isChecked();
 	converter_settings.inverted_shadowmaps = chk_inverted_shadowmaps->isChecked();
 	converter_settings.scale_to_atlasinfo = rb_scale_to_atlasinfo->isChecked();
@@ -218,6 +222,7 @@ void GIWindow::updateUiFromSettings() {
 	dsb_quality_size_multiplier->setValue(converter_settings.quality_size_multiplier);
 	sb_max_texture_size->setValue(converter_settings.max_texture_size);
 	sb_max_atlas_texture_size->setValue(converter_settings.max_atlas_texture_size);
+	chk_compress_groups->setChecked(converter_settings.compress_groups);
 	chk_no_gi_nodes->setChecked(converter_settings.no_gi_nodes);
 	chk_inverted_shadowmaps->setChecked(converter_settings.inverted_shadowmaps);
 	rb_scale_to_atlasinfo->setChecked(converter_settings.scale_to_atlasinfo);

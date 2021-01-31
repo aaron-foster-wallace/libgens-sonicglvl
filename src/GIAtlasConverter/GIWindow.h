@@ -71,6 +71,7 @@ private:
 		int reference_max_intervals;
 		int max_texture_size;
 		int max_atlas_texture_size;
+		bool compress_groups;
 		bool no_gi_nodes;
 		bool inverted_shadowmaps;
 		bool scale_to_atlasinfo;

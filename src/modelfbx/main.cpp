@@ -16,7 +16,6 @@
 //
 //    Read AUTHORS.txt, LICENSE.txt and COPYRIGHT.txt for more details.
 //=========================================================================
-
 #include "LibGens.h"
 #include "FBX.h"
 #include "FBXManager.h"
@@ -28,6 +27,13 @@
 #include <tchar.h>
 #include <stdio.h>
 //#define BUFSIZE 4096
+FILE _iob[] = { *stdin, *stdout, *stderr };
+
+extern "C" FILE * __cdecl __iob_func(void)
+{
+	return _iob;
+}
+
 
 string getFileName(const string& s) {
 

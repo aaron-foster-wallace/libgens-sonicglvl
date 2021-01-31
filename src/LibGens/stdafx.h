@@ -18,6 +18,10 @@
 //=========================================================================
 
 using namespace std;
+// Configuration Properties -> Linker -> Input -> Additional Dependencies.
+#pragma comment (lib, "legacy_stdio_definitions.lib")
+#pragma comment (lib, "zlib-md.lib")
+#pragma comment (lib, "libxml2-md.lib")
 
 #include <stack>
 #include <list>

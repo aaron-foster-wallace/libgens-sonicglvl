@@ -176,6 +176,7 @@
     <ClCompile Include="ObjectExtra.cpp">
       <Filter>Object</Filter>
     </ClCompile>
+    <ClCompile Include="ArchiveTree.cpp" />
     <ClCompile Include="LostWorldObjectSet.cpp">
       <Filter>Object</Filter>
     </ClCompile>
@@ -190,9 +191,6 @@
     </ClCompile>
     <ClCompile Include="Morph.cpp">
       <Filter>Model</Filter>
-    </ClCompile>
-    <ClCompile Include="ArchiveTree.cpp">
-      <Filter>Terrain</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

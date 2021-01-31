@@ -1,0 +1,3 @@
+[submodule "src/LibGensVS19/HavokLib"]
+	path = src/LibGensVS19/HavokLib
+	url = https://github.com/aaron-foster-wallace/HavokLib

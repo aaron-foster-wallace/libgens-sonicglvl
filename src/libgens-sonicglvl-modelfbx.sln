@@ -7,7 +7,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LibGens", "LibGens\LibGensV
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LibGens-externals", "LibGens-externals\LibGens-externalsVS19.vcxproj", "{45ECEEBE-EB47-4AA3-84C2-347CFE390209}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "modelfbx", "modelfbx\modelfbxVS19.vcxproj", "{0CFE6169-81A2-430F-A27A-B3955B44B67E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "modelfbx_multianim", "modelfbx_multianim\modelfbx_multianimVS19.vcxproj", "{0CFE6169-81A2-430F-A27A-B3955B44B67E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -53,10 +53,10 @@ Global
 		{0CFE6169-81A2-430F-A27A-B3955B44B67E}.Release 2012|Win32.ActiveCfg = Release 2012|Win32
 		{0CFE6169-81A2-430F-A27A-B3955B44B67E}.Release 2012|Win32.Build.0 = Release 2012|Win32
 		{0CFE6169-81A2-430F-A27A-B3955B44B67E}.Release 2012|x64.ActiveCfg = Release 2012|Win32
-		{0CFE6169-81A2-430F-A27A-B3955B44B67E}.Release_Char|Win32.ActiveCfg = Release 2012|Win32
-		{0CFE6169-81A2-430F-A27A-B3955B44B67E}.Release_Char|Win32.Build.0 = Release 2012|Win32
-		{0CFE6169-81A2-430F-A27A-B3955B44B67E}.Release_Char|x64.ActiveCfg = Debug|Win32
-		{0CFE6169-81A2-430F-A27A-B3955B44B67E}.Release_Char|x64.Build.0 = Debug|Win32
+		{0CFE6169-81A2-430F-A27A-B3955B44B67E}.Release_Char|Win32.ActiveCfg = Release|Win32
+		{0CFE6169-81A2-430F-A27A-B3955B44B67E}.Release_Char|Win32.Build.0 = Release|Win32
+		{0CFE6169-81A2-430F-A27A-B3955B44B67E}.Release_Char|x64.ActiveCfg = Release|Win32
+		{0CFE6169-81A2-430F-A27A-B3955B44B67E}.Release_Char|x64.Build.0 = Release|Win32
 		{0CFE6169-81A2-430F-A27A-B3955B44B67E}.Release|Win32.ActiveCfg = Release|Win32
 		{0CFE6169-81A2-430F-A27A-B3955B44B67E}.Release|Win32.Build.0 = Release|Win32
 		{0CFE6169-81A2-430F-A27A-B3955B44B67E}.Release|x64.ActiveCfg = Release|Win32

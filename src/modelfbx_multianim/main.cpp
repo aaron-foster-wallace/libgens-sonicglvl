@@ -17,12 +17,12 @@
 //    Read AUTHORS.txt, LICENSE.txt and COPYRIGHT.txt for more details.
 //=========================================================================
 #include "LibGens.h"
-#include "FBX.h"
+/*#include "FBX.h"
 #include "FBXManager.h"
 #include "HavokEnviroment.h"
 #include "MaterialLibrary.h"
 #include "Model.h"
-
+*/
 #include <windows.h>
 #include <tchar.h>
 #include <stdio.h>
@@ -33,6 +33,101 @@ extern "C" FILE * __cdecl __iob_func(void)
 {
 	return _iob;
 }
+
+// HavokLibSamples.cpp : This file contains the 'main' function. Program execution begins and ends there.
+//
+
+#include <cstdio>
+#include "HavokApi.hpp"
+#include "datas/masterprinter.hpp"
+#include "datas/fileinfo.hpp"
+#include "hkInternalInterfaces.h"
+
+#if _MSC_VER
+#include <tchar.h>
+#else
+#define _tmain main
+#define _TCHAR char
+#endif
+
+using namespace std::string_literals; // enables s-suffix for std::string literals
+
+#ifdef _MSC_VER
+// Use Visual C++'s memory checking functionality
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+#endif // _MSC_VER
+void TestAllosaurSpline3(const TSTRING fleName);
+int _tmain(const int argc, const TCHAR* argv[])
+{
+#ifdef _MSC_VER
+	//_crtBreakAlloc = 121467;
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#endif // _MSC_VER
+
+
+#ifdef UNICODE
+	printer.AddPrinterFunction(wprintf);
+#else
+	printer.AddPrinterFunction(reinterpret_cast<void*>(printf));
+#endif
+
+
+	TFileInfo info(argv[0]);
+
+	auto testingPath = R"(D:\Escritorio2\Havoc content tool plugin\sn_dash_loop.anm.hkx)";
+
+ 
+	TestAllosaurSpline3(testingPath);
+	return 0;
+}
+void TestAllosaurSpline3(const string fleName)
+{
+			printline("testing: ", << fleName);
+			IhkPackFile* hdr = IhkPackFile::Create(fleName.c_str());
+
+			if (!hdr)
+			{
+				printerror("testing failed!");
+				return;
+			}
+
+			hkRootLevelContainer* rcont = hdr->GetRootLevelContainer();
+
+			if (!rcont)
+			{
+				printerror("Couldn't find hkRootLevelContainer!");
+				return;
+			}
+
+			const hkaAnimationContainer* aniCont = rcont->GetVariant(0);
+
+			//TestBinding(aniCont);
+
+			const hkaAnimation* anim = aniCont->GetAnimation(0);
+
+			cout <<anim->GetDuration()<< "=="<<3.33354211;
+			cout <<anim->GetNumAnnotations()<< "==" << 93;
+
+			for (int cAnnot = 0; cAnnot < anim->GetNumAnnotations(); cAnnot++)
+			{
+				cout<<
+				anim->GetAnnotation(cAnnot).get()->GetName()<<
+					 cAnnot;
+			}
+
+			// Add some further testing here?
+
+			delete hdr;
+		 
+}
+
+
+//Real File: --------------------------------------------
+#ifdef PIPI
+
+
+
 
 
 string getFileName(const string& s) {
@@ -58,7 +153,7 @@ string getDirName(const string& s) {
 	}
 	return("");
 }
-int main(int argc, char** argv) {
+int main2(int argc, char** argv) {
     if (argc < 2) {
 		printf("Usage: modelfbx [mesh.model] [skeleton.skl.hkx] [animation.anm.hkx] [animation1.anm.hkx]  [animation2.anm.hkx].. [animation_n.anm.hkx] [output.fbx]\n - Parameters can be in any order. You can omit any parameter for excluding elements from the output.\n");
 		printf(" Also for anim you can use  wildcards like *.anm.hkx)\n");
@@ -181,3 +276,4 @@ int main(int argc, char** argv) {
     return 0;
 }
 
+#endif // PIPI

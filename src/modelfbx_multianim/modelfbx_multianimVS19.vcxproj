@@ -77,7 +77,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>../../depends/allegro/include;../../depends/fbxsdk_2017up/include;../../depends/pthreads/include;../../depends/hk2010_2_0_r1/Source;../LibGensVS19;../LibGens-externals;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../depends/HavokLib/source;../../depends/HavokLib/include;../../depends/HavokLib/3rd_party/PreCore;../../depends/allegro/include;../../depends/fbxsdk_2017up/include;../../depends/pthreads/include;../../depends/hk2010_2_0_r1/Source;../LibGensVS19;../LibGens-externals;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>HAVE_STRUCT_TIMESPEC;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <MinimalRebuild>true</MinimalRebuild>
@@ -86,8 +86,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>allegro-5.0.10-monolith-mt.lib;LibGens.lib;LibGens-externals.lib;libfbxsdk-md.lib;hkBase.lib;hkSerialize.lib;hkSceneData.lib;hkInternal.lib;hkGeometryUtilities.lib;hkVisualize.lib;hkCompat.lib;hkpCollide.lib;hkpConstraintSolver.lib;hkpDynamics.lib;hkpInternal.lib;hkpUtilities.lib;hkpVehicle.lib;hkaAnimation.lib;hkaInternal.lib;hkaRagdoll.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>../../depends/fbxsdk_2017up/lib/vs2017/x86/release;../../depends/allegro/lib;../../depends/hk2010_2_0_r1/Lib/win32_net_9-0/release_multithreaded_dll;../../depends/pthreads/lib/x86;../../lib/Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>HavokLib.lib;allegro-5.0.10-monolith-mt.lib;LibGens.lib;LibGens-externals.lib;libfbxsdk-md.lib;hkBase.lib;hkSerialize.lib;hkSceneData.lib;hkInternal.lib;hkGeometryUtilities.lib;hkVisualize.lib;hkCompat.lib;hkpCollide.lib;hkpConstraintSolver.lib;hkpDynamics.lib;hkpInternal.lib;hkpUtilities.lib;hkpVehicle.lib;hkaAnimation.lib;hkaInternal.lib;hkaRagdoll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>../../depends/HavokLib/lib/Win32_Release/;../../depends/fbxsdk_2017up/lib/vs2017/x86/release;../../depends/allegro/lib;../../depends/hk2010_2_0_r1/Lib/win32_net_9-0/release_multithreaded_dll;../../depends/pthreads/lib/x86;../../lib/Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release 2012|Win32'">

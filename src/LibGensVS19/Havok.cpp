@@ -23,8 +23,8 @@
 #include "HavokSkeletonCache.h"
 #include "HavokEnviroment.h"
 #include "HavokPropertyDatabase.h"
-#include <Common/Base/keycode.cxx>
-#include <Common/Base/Config/hkProductFeatures.cxx>
+//#include <Common/Base/keycode.cxx>
+//#include <Common/Base/Config/hkProductFeatures.cxx>
 
 // Keycode
 

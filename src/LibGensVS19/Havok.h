@@ -18,7 +18,7 @@
 //=========================================================================
 
 #pragma once
-
+/*
 #include <Common/Base/hkBase.h>
 #include <Common/Base/System/hkBaseSystem.h>
 #include <Common/Base/System/Error/hkDefaultError.h>
@@ -53,7 +53,7 @@
 #include <Physics/Collide/Shape/Compound/Tree/Mopp/hkpMoppBvTreeShape.h>
 #include <Physics/Collide/Shape/Compound/Tree/Mopp/hkpMoppCompilerInput.h>
 #include <Physics/Collide/Shape/Compound/Tree/Mopp/hkpMoppUtility.h>
-
+*/
 #ifdef Release2012
 #include <Physics/Internal/Collide/StaticCompound/hkpStaticCompoundShape.h>
 #include <Physics/Internal/Collide/BvCompressedMesh/hkpBvCompressedMeshShape.h>
@@ -62,14 +62,15 @@
 #include <Physics/Collide/Shape/Compound/Collection/List/hkpListShape.h>
 #include <Physics/Collide/Shape/Convex/ConvexVertices/hkpConvexVerticesShape.h>
 #endif
-
+/*
 #include <Physics/Collide/Shape/Compound/Collection/SimpleMesh/hkpSimpleMeshShape.h>
 #include <Physics/Collide/Shape/Compound/Collection/StorageExtendedMesh/hkpStorageExtendedMeshShape.h>
 #include <Common/Base/Math/Matrix/hkTransform.h>
 #include <Common/Base/Types/Geometry/hkGeometry.h>
 #include <Physics/Utilities/Collide/ShapeUtils/ShapeConverter/hkpShapeConverter.h>
-
+*/
 // Animation includes
+/*
 #include <Animation/Animation/Animation/Quantized/hkaQuantizedAnimation.h>
 #include <Animation/Animation/Animation/Mirrored/hkaMirroredAnimation.h>
 #include <Animation/Animation/Animation/Mirrored/hkaMirroredSkeleton.h>
@@ -83,6 +84,14 @@
 #include <Animation/Animation/Playback/Multithreaded/SampleAndCombine/hkaAnimationSampleAndCombineJobQueueUtils.h>
 #include <Animation/Animation/Rig/hkaPose.h>
 #include <Animation/Animation/Rig/hkaSkeletonUtils.h>
+*/
+//hkBaseTypes.h
+
+#include "HavokApi.hpp"
+#include "datas/masterprinter.hpp"
+#include "datas/fileinfo.hpp"
+#include "hkInternalInterfaces.h"
+
 
 #define LIBGENS_HAVOK_PHYSICS_EXTENSION     ".phy.hkx"
 #define LIBGENS_HAVOK_SKELETON_EXTENSION    ".skl.hkx"
@@ -98,6 +107,7 @@
 #define LIBGENS_HAVOK_DATABASE_DATA         "data"
 
 namespace LibGens {
-	static void HK_CALL HavokErrorReport(const char*, void*) {
+	//HK_CALL
+	static void  HavokErrorReport(const char*, void*) {
 	}
 };

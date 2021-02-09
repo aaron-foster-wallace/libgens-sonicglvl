@@ -21,7 +21,7 @@
 #include "HavokAnimationCache.h"
 
 namespace LibGens {
-	HavokAnimationCache::HavokAnimationCache(hkResource *data_p, string path_p, string name_p, hkaAnimationBinding *animation_binding_p, hkaAnimation *animation_p) {
+	HavokAnimationCache::HavokAnimationCache(IhkPackFile* data_p, string path_p, string name_p, hkaAnimationBinding *animation_binding_p, hkaAnimation *animation_p) {
 		name = name_p;
 		animation = animation_p;
 		animation_binding = animation_binding_p;

@@ -48,7 +48,7 @@ namespace LibGens {
 		}
 
 		FbxScene* lScene = fbx->getScene();
-		lScene->GetGlobalSettings().SetAxisSystem(FbxAxisSystem::Max);
+		lScene->GetGlobalSettings().SetAxisSystem(FbxAxisSystem::MayaYUp);
 		lScene->GetGlobalSettings().SetSystemUnit(FbxSystemUnit::m);
 
 		// Export scene
@@ -114,13 +114,13 @@ namespace LibGens {
 
 	FbxNode *FBX::addHavokBone(FbxNode *parent_node, unsigned int parent_index, vector<FbxNode *> &skeleton_bones, hkaSkeleton *skeleton) {
 		FbxNode *root_bone=NULL;
-		for (int b=0; b<skeleton->m_bones.getSize(); b++) {
-			hkaBone &bone           = skeleton->m_bones[b];
-			string bone_name        = bone.m_name;
+		for (int b=0; b<skeleton->GetNumBones(); b++) {
+			//hkaBone &bone           = skeleton->GetBoneTM(b);
+			string bone_name        = skeleton->GetBoneName(b);
 			size_t model_bone_index = 0;
 			bool found=false;
 
-			if (skeleton->m_parentIndices[b] != parent_index) {
+			if (skeleton->GetBoneParentID(b) != parent_index) {
 				continue;
 			}
 
@@ -132,12 +132,14 @@ namespace LibGens {
 			bone_node->SetNodeAttribute(lSkeletonRootAttribute);
 			root_bone = bone_node;
 
-			hkQsTransform ref = skeleton->m_referencePose[b];
-			bone_node->LclTranslation.Set(FbxVector4(ref.getTranslation()(0), ref.getTranslation()(1), ref.getTranslation()(2)));
-			//bone_node->LclScaling.Set(FbxVector4(ref.getScale()(0), ref.getScale()(1), ref.getScale()(2)));
-			FbxQuaternion lcl_quat(ref.getRotation()(0), ref.getRotation()(1), ref.getRotation()(2), ref.getRotation()(3));
+			const hkQTransform* ref = skeleton->GetBoneTM(b);
+			
+ 			bone_node->LclTranslation.Set(FbxVector4(ref->position[0], ref->position[1], ref->position[2]));//
+			//bone_node->LclScaling.Set(FbxVector4(ref->scale[0], ref->scale[1], ref->scale[2]));
+			FbxQuaternion lcl_quat(ref->rotation[0], ref->rotation[1], ref->rotation[2], ref->rotation[3]);//ref->rotation[0], ref->rotation[1], ref->rotation[2], ref->rotation[3]
 			FbxVector4 lcl_rotation;
 			lcl_rotation.SetXYZ(lcl_quat);
+			
 			bone_node->LclRotation.Set(lcl_rotation);
 
 			skeleton_bones[b] = bone_node;
@@ -208,172 +210,24 @@ namespace LibGens {
 	}
 
 
-	void FBX::addHavokAnimation(vector<FbxNode *> &skeleton_bones, hkaSkeleton *skeleton, hkaAnimationBinding *animation_binding, hkaAnimation *animation) {
-		float duration       = animation->m_duration;
-		float frame_duration = 1.0 / 30.0;
-		float current_frame  = 0.0;
-		bool first_frame = true;
-
-		if (frame_duration <= 0.0) return;
-
-		// Create an animation control
-		hkaDefaultAnimationControl* ac = new hkaDefaultAnimationControl(animation_binding);
-		ac->setLocalTime(0);
-
-		// Create a new animated skeleton
-		hkaAnimatedSkeleton* animated_skeleton = new hkaAnimatedSkeleton(skeleton);
-		animated_skeleton->addAnimationControl( ac );
-		ac->removeReference();
-
-		FbxAnimStack* lAnimStack = FbxAnimStack::Create(scene, "");
-        FbxAnimLayer* lAnimLayer = FbxAnimLayer::Create(scene, "");
-        lAnimStack->AddMember(lAnimLayer);
-
-		while (true) {
-			if (!first_frame) current_frame += frame_duration;
-			if (current_frame > duration) {
-				current_frame = duration;
-			}
-
-			first_frame = false;
-
-			// Advance the animation
-			animated_skeleton->stepDeltaTime(frame_duration);
-
-			hkaPose pose(animated_skeleton->getSkeleton());
-			animated_skeleton->sampleAndCombineAnimations(pose.accessUnsyncedPoseLocalSpace().begin(), pose.getFloatSlotValues().begin());
-
-			for (int i=0; i<skeleton->m_bones.getSize(); i++) {
-				string bone_name= ToString(skeleton->m_bones[i].m_name);
-
-				for (size_t bone_index=0; bone_index<skeleton_bones.size(); bone_index++) {
-					if (bone_name == skeleton_bones[bone_index]->GetName()) {
-						hkQsTransform transform_local = pose.getBoneLocalSpace(i);
-						hkQsTransform transform_model = hkQsTransform::IDENTITY;
-
-						hkInt16 parent_index = skeleton->m_parentIndices[i];
-						if ((parent_index >= 0) && (parent_index < (int) skeleton_bones.size())) {
-							transform_model = pose.getBoneModelSpace(parent_index);
-						}
-
-						hkVector4 ts_m = transform_model.getScale();
-						hkVector4 tt = transform_local.getTranslation();
-						hkQuaternion tr = transform_local.getRotation();
-						hkVector4 ts = transform_local.getScale();
-
-						tt = hkVector4(tt(0) / ts_m(0), tt(1) / ts_m(0), tt(2) / ts_m(0));
-
-						//printfErrorMessage(LOG, "%s at %f: %f %f %f %f\n", bone_name.c_str(), current_frame, (float)tt(0), (float)tt(1), (float)tt(2), (float)tt(3));
-						//printfErrorMessage(LOG, "%s at %f: %f %f %f %f\n", bone_name.c_str(), current_frame, (float)ts(0), (float)ts(1), (float)ts(2), (float)ts(3));
-
-						FbxAnimCurve* curveTX = skeleton_bones[bone_index]->LclTranslation.GetCurve(lAnimLayer, FBXSDK_CURVENODE_COMPONENT_X, true);
-						FbxAnimCurve* curveTY = skeleton_bones[bone_index]->LclTranslation.GetCurve(lAnimLayer, FBXSDK_CURVENODE_COMPONENT_Y, true);
-						FbxAnimCurve* curveTZ = skeleton_bones[bone_index]->LclTranslation.GetCurve(lAnimLayer, FBXSDK_CURVENODE_COMPONENT_Z, true);
-
-						FbxAnimCurve* curveRX = skeleton_bones[bone_index]->LclRotation.GetCurve(lAnimLayer, FBXSDK_CURVENODE_COMPONENT_X, true);
-						FbxAnimCurve* curveRY = skeleton_bones[bone_index]->LclRotation.GetCurve(lAnimLayer, FBXSDK_CURVENODE_COMPONENT_Y, true);
-						FbxAnimCurve* curveRZ = skeleton_bones[bone_index]->LclRotation.GetCurve(lAnimLayer, FBXSDK_CURVENODE_COMPONENT_Z, true);
-
-						FbxAnimCurve* curveSX = skeleton_bones[bone_index]->LclScaling.GetCurve(lAnimLayer, FBXSDK_CURVENODE_COMPONENT_X, true);
-						FbxAnimCurve* curveSY = skeleton_bones[bone_index]->LclScaling.GetCurve(lAnimLayer, FBXSDK_CURVENODE_COMPONENT_Y, true);
-						FbxAnimCurve* curveSZ = skeleton_bones[bone_index]->LclScaling.GetCurve(lAnimLayer, FBXSDK_CURVENODE_COMPONENT_Z, true);
-
-						FbxTime lTime;
-						lTime.SetSecondDouble(current_frame);
-
-						if (curveTX) {
-							curveTX->KeyModifyBegin();
-							int lKeyIndex = curveTX->KeyAdd(lTime);
-							curveTX->KeySetValue(lKeyIndex, tt(0));
-							curveTX->KeySetInterpolation(lKeyIndex, FbxAnimCurveDef::eInterpolationLinear);
-							curveTX->KeyModifyEnd();
-						}
-
-						if (curveTY) {
-							curveTY->KeyModifyBegin();
-							int lKeyIndex = curveTY->KeyAdd(lTime);
-							curveTY->KeySetValue(lKeyIndex, tt(1));
-							curveTY->KeySetInterpolation(lKeyIndex, FbxAnimCurveDef::eInterpolationLinear);
-							curveTY->KeyModifyEnd();
-						}
-
-						if (curveTZ) {
-							curveTZ->KeyModifyBegin();
-							int lKeyIndex = curveTZ->KeyAdd(lTime);
-							curveTZ->KeySetValue(lKeyIndex, tt(2));
-							curveTZ->KeySetInterpolation(lKeyIndex, FbxAnimCurveDef::eInterpolationLinear);
-							curveTZ->KeyModifyEnd();
-						}
-
-						
-						if (curveSX) {
-							curveSX->KeyModifyBegin();
-							int lKeyIndex = curveSX->KeyAdd(lTime);
-							curveSX->KeySetValue(lKeyIndex, ts(0));
-							curveSX->KeySetInterpolation(lKeyIndex, FbxAnimCurveDef::eInterpolationLinear);
-							curveSX->KeyModifyEnd();
-						}
-
-						if (curveSY) {
-							curveSY->KeyModifyBegin();
-							int lKeyIndex = curveSY->KeyAdd(lTime);
-							curveSY->KeySetValue(lKeyIndex, ts(0));
-							curveSY->KeySetInterpolation(lKeyIndex, FbxAnimCurveDef::eInterpolationLinear);
-							curveSY->KeyModifyEnd();
-						}
-
-						if (curveSZ) {
-							curveSZ->KeyModifyBegin();
-							int lKeyIndex = curveSZ->KeyAdd(lTime);
-							curveSZ->KeySetValue(lKeyIndex, ts(0));
-							curveSZ->KeySetInterpolation(lKeyIndex, FbxAnimCurveDef::eInterpolationLinear);
-							curveSZ->KeyModifyEnd();
-						}
-						
-						
-
-						FbxQuaternion lcl_quat(tr(0), tr(1), tr(2), tr(3));
-						FbxVector4 lcl_rotation;
-						lcl_rotation.SetXYZ(lcl_quat);
-						
-						if (curveRX) {
-							curveRX->KeyModifyBegin();
-							int lKeyIndex = curveRX->KeyAdd(lTime);
-							curveRX->KeySetValue(lKeyIndex, lcl_rotation[0]);
-							curveRX->KeySetInterpolation(lKeyIndex, FbxAnimCurveDef::eInterpolationLinear);
-							curveRX->KeyModifyEnd();
-						}
-
-						if (curveRY) {
-							curveRY->KeyModifyBegin();
-							int lKeyIndex = curveRY->KeyAdd(lTime);
-							curveRY->KeySetValue(lKeyIndex, lcl_rotation[1]);
-							curveRY->KeySetInterpolation(lKeyIndex, FbxAnimCurveDef::eInterpolationLinear);
-							curveRY->KeyModifyEnd();
-						}
-
-						if (curveRZ) {
-							curveRZ->KeyModifyBegin();
-							int lKeyIndex = curveRZ->KeyAdd(lTime);
-							curveRZ->KeySetValue(lKeyIndex, lcl_rotation[2]);
-							curveRZ->KeySetInterpolation(lKeyIndex, FbxAnimCurveDef::eInterpolationLinear);
-							curveRZ->KeyModifyEnd();
-						}
-							
-
-						break;
-					}
-				}
-			}
-
-			if (current_frame == duration) {
-				break;
+	void FBX::addHavokAnimation(vector<FbxNode *> &skeleton_bones, hkaSkeleton * skeleton, hkaAnimationBinding * animation_binding, hkaAnimation *animation) {
+		
+		addHavokAnimationNamed("", skeleton_bones, skeleton, animation_binding, animation);
+	}
+	//TODO: this method is ultra dumb, just use a reverse array lookup or something
+	size_t auxGetBoneIndexToTransformTrack(hkaAnimationBinding* animation_binding, size_t bone_index) {
+		for (size_t i = 0; i < animation_binding->GetNumTransformTrackToBoneIndices(); i++)
+		{
+			if (animation_binding->GetTransformTrackToBoneIndex(i) == bone_index)
+			{
+				return i;
 			}
 		}
+		return   -1;
 	}
-
 	void FBX::addHavokAnimationNamed(string name,vector<FbxNode*>& skeleton_bones, hkaSkeleton* skeleton, hkaAnimationBinding* animation_binding, hkaAnimation* animation) {
-		float duration = animation->m_duration;
+		
+		float duration = animation->GetDuration();
 		float frame_duration = 1.0 / 30.0;
 		float current_frame = 0.0;
 		bool first_frame = true;
@@ -381,18 +235,26 @@ namespace LibGens {
 		if (frame_duration <= 0.0) return;
 
 		// Create an animation control
-		hkaDefaultAnimationControl* ac = new hkaDefaultAnimationControl(animation_binding);
-		ac->setLocalTime(0);
+		//hkaDefaultAnimationControl* ac = new hkaDefaultAnimationControl(animation_binding);
+		//ac->setLocalTime(0);
 
 		// Create a new animated skeleton
-		hkaAnimatedSkeleton* animated_skeleton = new hkaAnimatedSkeleton(skeleton);
-		animated_skeleton->addAnimationControl(ac);
-		ac->removeReference();
+		//hkaAnimatedSkeleton* animated_skeleton = new hkaAnimatedSkeleton(skeleton);
+		//animated_skeleton->addAnimationControl( ac );
+		//ac->removeReference();
 
 		FbxAnimStack* lAnimStack = FbxAnimStack::Create(scene, name.c_str());
 		FbxAnimLayer* lAnimLayer = FbxAnimLayer::Create(scene, "");
 		lAnimStack->AddMember(lAnimLayer);
-
+		//animation->
+		const hkaAnimatedReferenceFrame* motion = animation->GetExtractedMotion();
+		
+		hkQTransform** hkqanimation_list = new hkQTransform*[animation_binding->GetNumTransformTrackToBoneIndices()];
+		for (size_t i = 0; i < animation_binding->GetNumTransformTrackToBoneIndices(); i++)
+		{
+			hkqanimation_list[i] = new hkQTransform();
+		}
+		animation->ComputeFrameRate();
 		while (true) {
 			if (!first_frame) current_frame += frame_duration;
 			if (current_frame > duration) {
@@ -400,35 +262,44 @@ namespace LibGens {
 			}
 
 			first_frame = false;
+			
+			// Advance the animation			
+			//animation->stepDeltaTime(frame_duration);
 
-			// Advance the animation
-			animated_skeleton->stepDeltaTime(frame_duration);
-
-			hkaPose pose(animated_skeleton->getSkeleton());
-			animated_skeleton->sampleAndCombineAnimations(pose.accessUnsyncedPoseLocalSpace().begin(), pose.getFloatSlotValues().begin());
-
-			for (int i = 0; i < skeleton->m_bones.getSize(); i++) {
-				string bone_name = ToString(skeleton->m_bones[i].m_name);
+			//skeleton->GetFullBone(0)
+			//const iteratorBoneTMs pose=(skeleton->BoneTransforms());
+			//skeleton->sampleAndCombineAnimations(pose.accessUnsyncedPoseLocalSpace().begin(), pose.getFloatSlotValues().begin());
+			//animation_binding->GetTransformTrackToBoneIndex();
+	
+			
+			for (int i = 0; i < skeleton->GetNumBones(); i++) {
+				hkFullBone bone = skeleton->GetFullBone(i);
+				string bone_name = ToString(bone.name);
 
 				for (size_t bone_index = 0; bone_index < skeleton_bones.size(); bone_index++) {
 					if (bone_name == skeleton_bones[bone_index]->GetName()) {
-						hkQsTransform transform_local = pose.getBoneLocalSpace(i);
-						hkQsTransform transform_model = hkQsTransform::IDENTITY;
+						const hkQTransform* transform_local = bone.transform;
+						const short parent_index = skeleton->GetBoneParentID(bone.parentID);
+						int track_index=auxGetBoneIndexToTransformTrack(animation_binding, bone_index);
+						
 
-						hkInt16 parent_index = skeleton->m_parentIndices[i];
-						if ((parent_index >= 0) && (parent_index < (int)skeleton_bones.size())) {
-							transform_model = pose.getBoneModelSpace(parent_index);
+
+						//Vector4 ts_m = transform_model.scale;
+						Vector4 tt = transform_local->position;
+						Vector4 tr = transform_local->rotation;
+						Vector4 ts = transform_local->scale;
+
+ 						
+						hkQTransform* hkqanimation;// = const_cast<hkQTransform*>(bone.transform);
+						if(track_index!=-1){
+							hkqanimation = hkqanimation_list[track_index];// new hkQTransform();
+							
+
+							animation->GetTransform(track_index, current_frame, *hkqanimation);
+							tt =  hkqanimation->position;
+							tr = hkqanimation->rotation;
+							ts =  hkqanimation->scale;
 						}
-
-						hkVector4 ts_m = transform_model.getScale();
-						hkVector4 tt = transform_local.getTranslation();
-						hkQuaternion tr = transform_local.getRotation();
-						hkVector4 ts = transform_local.getScale();
-
-						tt = hkVector4(tt(0) / ts_m(0), tt(1) / ts_m(0), tt(2) / ts_m(0));
-
-						//printfErrorMessage(LOG, "%s at %f: %f %f %f %f\n", bone_name.c_str(), current_frame, (float)tt(0), (float)tt(1), (float)tt(2), (float)tt(3));
-						//printfErrorMessage(LOG, "%s at %f: %f %f %f %f\n", bone_name.c_str(), current_frame, (float)ts(0), (float)ts(1), (float)ts(2), (float)ts(3));
 
 						FbxAnimCurve* curveTX = skeleton_bones[bone_index]->LclTranslation.GetCurve(lAnimLayer, FBXSDK_CURVENODE_COMPONENT_X, true);
 						FbxAnimCurve* curveTY = skeleton_bones[bone_index]->LclTranslation.GetCurve(lAnimLayer, FBXSDK_CURVENODE_COMPONENT_Y, true);
@@ -448,7 +319,7 @@ namespace LibGens {
 						if (curveTX) {
 							curveTX->KeyModifyBegin();
 							int lKeyIndex = curveTX->KeyAdd(lTime);
-							curveTX->KeySetValue(lKeyIndex, tt(0));
+							curveTX->KeySetValue(lKeyIndex, tt[0]);
 							curveTX->KeySetInterpolation(lKeyIndex, FbxAnimCurveDef::eInterpolationLinear);
 							curveTX->KeyModifyEnd();
 						}
@@ -456,7 +327,7 @@ namespace LibGens {
 						if (curveTY) {
 							curveTY->KeyModifyBegin();
 							int lKeyIndex = curveTY->KeyAdd(lTime);
-							curveTY->KeySetValue(lKeyIndex, tt(1));
+							curveTY->KeySetValue(lKeyIndex, tt[1]);
 							curveTY->KeySetInterpolation(lKeyIndex, FbxAnimCurveDef::eInterpolationLinear);
 							curveTY->KeyModifyEnd();
 						}
@@ -464,7 +335,7 @@ namespace LibGens {
 						if (curveTZ) {
 							curveTZ->KeyModifyBegin();
 							int lKeyIndex = curveTZ->KeyAdd(lTime);
-							curveTZ->KeySetValue(lKeyIndex, tt(2));
+							curveTZ->KeySetValue(lKeyIndex, tt[2]);
 							curveTZ->KeySetInterpolation(lKeyIndex, FbxAnimCurveDef::eInterpolationLinear);
 							curveTZ->KeyModifyEnd();
 						}
@@ -473,7 +344,7 @@ namespace LibGens {
 						if (curveSX) {
 							curveSX->KeyModifyBegin();
 							int lKeyIndex = curveSX->KeyAdd(lTime);
-							curveSX->KeySetValue(lKeyIndex, ts(0));
+							curveSX->KeySetValue(lKeyIndex, ts[0]);
 							curveSX->KeySetInterpolation(lKeyIndex, FbxAnimCurveDef::eInterpolationLinear);
 							curveSX->KeyModifyEnd();
 						}
@@ -481,7 +352,7 @@ namespace LibGens {
 						if (curveSY) {
 							curveSY->KeyModifyBegin();
 							int lKeyIndex = curveSY->KeyAdd(lTime);
-							curveSY->KeySetValue(lKeyIndex, ts(0));
+							curveSY->KeySetValue(lKeyIndex, ts[0]);
 							curveSY->KeySetInterpolation(lKeyIndex, FbxAnimCurveDef::eInterpolationLinear);
 							curveSY->KeyModifyEnd();
 						}
@@ -489,14 +360,14 @@ namespace LibGens {
 						if (curveSZ) {
 							curveSZ->KeyModifyBegin();
 							int lKeyIndex = curveSZ->KeyAdd(lTime);
-							curveSZ->KeySetValue(lKeyIndex, ts(0));
+							curveSZ->KeySetValue(lKeyIndex, ts[0]);
 							curveSZ->KeySetInterpolation(lKeyIndex, FbxAnimCurveDef::eInterpolationLinear);
 							curveSZ->KeyModifyEnd();
 						}
 
 
 
-						FbxQuaternion lcl_quat(tr(0), tr(1), tr(2), tr(3));
+						FbxQuaternion lcl_quat(tr[0], tr[1], tr[2], tr[3]);
 						FbxVector4 lcl_rotation;
 						lcl_rotation.SetXYZ(lcl_quat);
 
@@ -705,7 +576,7 @@ namespace LibGens {
 			
 			if (havok_skeleton) {
 				vector<FbxNode *> skeleton_bones;
-				skeleton_bones.resize(havok_skeleton->m_bones.getSize(), NULL);
+				skeleton_bones.resize(havok_skeleton->GetNumBones(), NULL);
 
 				addHavokSkeleton(skeleton_bones, havok_skeleton);
 
@@ -893,7 +764,7 @@ namespace LibGens {
 
 			if (havok_skeleton) {
 				vector<FbxNode*> skeleton_bones;
-				skeleton_bones.resize(havok_skeleton->m_bones.getSize(), NULL);
+				skeleton_bones.resize(havok_skeleton->GetNumBones(), NULL);
 
 				addHavokSkeleton(skeleton_bones, havok_skeleton);
 
@@ -927,7 +798,9 @@ namespace LibGens {
 	FbxMesh *FBX::addHavokCollision(string name, hkGeometry *geometry, Matrix4 transform) {
 		FbxNode* lMeshNode = NULL;
 		FbxMesh* lMesh = NULL;
-
+		//FIXME 
+		//TODO: Move Phisics to havoklib
+		/*
 		if (geometry) {
 			lMeshNode = FbxNode::Create(scene, name.c_str());
 			lMesh = FbxMesh::Create(scene, name.c_str());
@@ -967,7 +840,7 @@ namespace LibGens {
 			FbxNode *lRootNode = scene->GetRootNode();
 			lRootNode->AddChild(lMeshNode);
 		}
-
+		*/
 		return lMesh;
 	}
 	

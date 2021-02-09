@@ -21,26 +21,26 @@
 #include "Havok.h"
 
 namespace LibGens {
-	class HavokPhysicsCache;
+	//class HavokPhysicsCache;
 	class HavokSkeletonCache;
 	class HavokAnimationCache;
 
 	class HavokEnviroment {
 		protected:
-			list<HavokPhysicsCache *> physics_cache;
+			//list<HavokPhysicsCache *> physics_cache;
 			list<HavokSkeletonCache *> skeleton_cache;
 			list<HavokAnimationCache *> animation_cache;
 			list<string> search_paths;
 		public:
 			HavokEnviroment(int bufferSize);
 			void loadHavokFile(string filename, string animation_name="");
-			void dumpPhysics(hkpPhysicsData*);
-			void dumpPhysicsSystem(hkpPhysicsSystem&);
-			void dumpRigidbody(hkpRigidBody&);
+			//void dumpPhysics(hkpPhysicsData*);
+			//void dumpPhysicsSystem(hkpPhysicsSystem&);
+			//void dumpRigidbody(hkpRigidBody&);
 			void addFolder(string folder);
-			HavokPhysicsCache *getPhysics(string physics_name);
+			//HavokPhysicsCache *getPhysics(string physics_name);
 			HavokSkeletonCache *getSkeleton(string skeleton_name);
 			HavokAnimationCache *getAnimation(string animation_name);
-			bool deletePhysicsEntry(string physics_name);
+			//bool deletePhysicsEntry(string physics_name);
 	};
 };

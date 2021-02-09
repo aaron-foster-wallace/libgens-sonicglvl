@@ -19,7 +19,9 @@
 
 #include "Havok.h"
 #include "HavokPropertyDatabase.h"
+//TODO: /note : this class seems to not be used anywhere
 
+#ifdef HavokPropertyDatabaseEntry
 namespace LibGens {
 	unsigned int HavokPropertyDatabaseEntry::getKey() {
 		return key;
@@ -141,3 +143,4 @@ namespace LibGens {
 		}
 	}
 };
+#endif

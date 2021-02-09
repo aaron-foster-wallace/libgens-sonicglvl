@@ -21,7 +21,7 @@
 #include "HavokSkeletonCache.h"
 
 namespace LibGens {
-	HavokSkeletonCache::HavokSkeletonCache(hkResource *data_p, string path_p, string name_p, hkaSkeleton *skeleton_p) {
+	HavokSkeletonCache::HavokSkeletonCache(IhkPackFile *data_p, string path_p, string name_p, hkaSkeleton *skeleton_p) {
 		name = name_p;
 		data = data_p;
 		path = path_p;

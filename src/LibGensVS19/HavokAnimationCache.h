@@ -26,10 +26,10 @@ namespace LibGens {
 			hkaAnimation *animation;
 			hkaAnimationBinding *animation_binding;
 			string extra;
-			hkResource *data;
+			IhkPackFile* data;
 			string path;
 		public:
-			HavokAnimationCache(hkResource *data_p, string path_p, string name_p, hkaAnimationBinding *animation_binding_p, hkaAnimation *animation_p);
+			HavokAnimationCache(IhkPackFile*data_p, string path_p, string name_p, hkaAnimationBinding *animation_binding_p, hkaAnimation *animation_p);
 			string getName();
 			hkaAnimation *getAnimation();
 			hkaAnimationBinding *getAnimationBinding();

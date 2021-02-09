@@ -28,10 +28,10 @@ namespace LibGens {
 			string name;
 			hkaSkeleton *skeleton;
 			string extra;
-			hkResource *data;
+			IhkPackFile* data;
 			string path;
 		public:
-			HavokSkeletonCache(hkResource *data_p, string path_p, string name_p, hkaSkeleton *skeleton_p);
+			HavokSkeletonCache(IhkPackFile* data_p, string path_p, string name_p, hkaSkeleton *skeleton_p);
 			string getName();
 			hkaSkeleton *getSkeleton();
 			void setExtra(string v);

@@ -18,7 +18,8 @@
 //=========================================================================
 
 #pragma once
-
+//TODO: /note : this class seems to not be used anywhere
+#ifdef HavokPropertyDatabaseEntry
 namespace LibGens {
 	class HavokPropertyDatabaseEntry {
 		protected:
@@ -49,3 +50,4 @@ namespace LibGens {
 			void applyProperties(hkpRigidBody *rigid_body);
 	};
 };
+#endif

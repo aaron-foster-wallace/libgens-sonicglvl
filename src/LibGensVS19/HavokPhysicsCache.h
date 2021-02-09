@@ -19,6 +19,10 @@
 
 #pragma once
 
+#ifdef HavokPhysicsCache
+
+
+
 class hkpPhysicsData;
 class hkResource;
 
@@ -27,11 +31,11 @@ namespace LibGens {
 		protected:
 			string name;
 			hkpPhysicsData *physics;
-			hkResource *data;
+			IhkPackFile *data;
 			string extra;
 			string path;
 		public:
-			HavokPhysicsCache(hkResource *data_p, string path_p, string name_p, hkpPhysicsData *physics_p);
+			HavokPhysicsCache(IhkPackFile*data_p, string path_p, string name_p, hkpPhysicsData *physics_p);
 			string getName();
 			hkpPhysicsData *getPhysics();
 			void setExtra(string v);
@@ -41,3 +45,4 @@ namespace LibGens {
 			~HavokPhysicsCache();
 	};
 };
+#endif // 

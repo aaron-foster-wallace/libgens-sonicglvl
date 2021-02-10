@@ -48,7 +48,7 @@ namespace LibGens {
 		}
 
 		FbxScene* lScene = fbx->getScene();
-		lScene->GetGlobalSettings().SetAxisSystem(FbxAxisSystem::MayaYUp);
+		lScene->GetGlobalSettings().SetAxisSystem(FbxAxisSystem::Max);
 		lScene->GetGlobalSettings().SetSystemUnit(FbxSystemUnit::m);
 
 		// Export scene

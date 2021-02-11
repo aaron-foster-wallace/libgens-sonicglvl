@@ -32,7 +32,7 @@
 #include "HavokAnimationCache.h"
 #include <cstdio>
 
-
+#include "Parameter.h"
 
 namespace LibGens {
 	void FBXManager::exportFBX(FBX *fbx, string filename) {
@@ -76,7 +76,35 @@ namespace LibGens {
 		lMaterial->ShadingModel.Set(lShadingName);
 		lMaterial->Shininess.Set(0.0);
 		lMaterial->Specular.Set(lBlack);
-		lMaterial->SpecularFactor.Set(0.0);
+		lMaterial->SpecularFactor.Set(0);
+
+#define EXPERIMENTAL_MATERIALS 1
+
+#ifdef EXPERIMENTAL_MATERIALS
+
+
+
+		for (Parameter* p : material->getParameters())
+		{
+			if (p->getName() == "specular" ) {
+				lMaterial->Specular.Set(p->getColor());
+			}
+			else if (p->getName() == "emissive") {
+				lMaterial->Emissive.Set(p->getColor());
+			}else if (p->getName() == "opacity_reflection_refraction_spectype") {
+				Color c = p->getColor();
+				lMaterial->TransparencyFactor.Set(c.r);
+				lMaterial->ReflectionFactor.Set(c.g);				
+			}else if (p->getName() == "power_gloss_level") {
+					Color c = p->getColor();
+					//c->r
+					
+					//lMaterial->Shininess.Set(c.r);//gloss
+					//lMaterial->SpecularFactor.Set(c.g);//level?
+			}
+		}
+#endif // EXPERIMENTAL_MATERIALS		
+
 
 		// Set texture properties.
 		Texture *texture_unit = material->getTextureByUnit("diffuse");
@@ -108,6 +136,55 @@ namespace LibGens {
 			if (lMaterial) lMaterial->Ambient.ConnectSrcObject(lTexture);
 		}
 
+#ifdef EXPERIMENTAL_MATERIALS
+
+		texture_unit = material->getTextureByUnit("reflection");
+		if (texture_unit) {
+			FbxFileTexture* lTexture = FbxFileTexture::Create(scene, texture_unit->getTexset().c_str());
+			lTexture->SetFileName((material->getFolder() + texture_unit->getName() + LIBGENS_TEXTURE_FILE_EXTENSION).c_str());
+			lTexture->SetTextureUse(FbxTexture::eSphericalReflectionMap);
+			lTexture->SetMappingType(FbxTexture::eUV);
+			lTexture->SetMaterialUse(FbxFileTexture::eModelMaterial);
+			lTexture->SetSwapUV(false);
+			lTexture->SetTranslation(0.0, 0.0);
+			lTexture->SetScale(1.0, 1.0);
+			lTexture->SetRotation(0.0, 0.0);
+			lTexture->UVSet.Set("UVChannel_1");
+			if (lMaterial) lMaterial->Reflection.ConnectSrcObject(lTexture);
+		}
+
+		texture_unit = material->getTextureByUnit("normal");
+		if (texture_unit) {
+			FbxFileTexture* lTexture = FbxFileTexture::Create(scene, texture_unit->getTexset().c_str());
+			lTexture->SetFileName((material->getFolder() + texture_unit->getName() + LIBGENS_TEXTURE_FILE_EXTENSION).c_str());
+			lTexture->SetTextureUse(FbxTexture::eBumpNormalMap);
+			lTexture->SetMappingType(FbxTexture::eUV);
+			lTexture->SetMaterialUse(FbxFileTexture::eModelMaterial);
+			lTexture->SetSwapUV(false);
+			lTexture->SetTranslation(0.0, 0.0);
+			lTexture->SetScale(1.0, 1.0);
+			lTexture->SetRotation(0.0, 0.0);
+			lTexture->UVSet.Set("UVChannel_1");
+			if (lMaterial) lMaterial->NormalMap.ConnectSrcObject(lTexture);
+		}
+		
+		/*
+		//is wrong
+		texture_unit = material->getTextureByUnit("specular");
+		if (texture_unit) {
+			FbxFileTexture* lTexture = FbxFileTexture::Create(scene, texture_unit->getTexset().c_str());
+			lTexture->SetFileName((material->getFolder() + texture_unit->getName() + LIBGENS_TEXTURE_FILE_EXTENSION).c_str());
+			lTexture->SetTextureUse(FbxTexture::eStandard);
+			lTexture->SetMappingType(FbxTexture::eUV);
+			lTexture->SetMaterialUse(FbxFileTexture::eModelMaterial);
+			lTexture->SetSwapUV(false);
+			lTexture->SetTranslation(0.0, 0.0);
+			lTexture->SetScale(1.0, 1.0);
+			lTexture->SetRotation(0.0, 0.0);
+			lTexture->UVSet.Set("UVChannel_2");
+			if (lMaterial) lMaterial->Specular.ConnectSrcObject(lTexture);
+		}*/
+#endif // EXPERIMENTAL_MATERIALS
 		return lMaterial;
 	}
 

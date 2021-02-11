@@ -446,7 +446,7 @@ namespace LibGens {
 
 			Color() : r(1), g(1), b(1), a(1) {
 			}
-
+			operator FbxDouble3() { return FbxDouble3(r, g, b); }
 
 			Color(float r_p, float g_p, float b_p) : r(r_p), g(g_p), b(b_p), a(1) {
 			}

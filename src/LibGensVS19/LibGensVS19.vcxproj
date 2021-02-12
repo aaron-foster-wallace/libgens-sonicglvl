@@ -202,6 +202,7 @@
     <ClInclude Include="HavokPhysicsCache.h" />
     <ClInclude Include="HavokPropertyDatabase.h" />
     <ClInclude Include="HavokSkeletonCache.h" />
+    <ClInclude Include="HavokSplineAnimHelper.h" />
     <ClInclude Include="InstanceMTI.h" />
     <ClInclude Include="Keyframe.h" />
     <ClInclude Include="KeyframeSet.h" />

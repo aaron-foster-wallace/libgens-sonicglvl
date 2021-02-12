@@ -33,6 +33,7 @@
 #include <cstdio>
 
 #include "Parameter.h"
+#include "HavokSplineAnimHelper.h"
 
 namespace LibGens {
 	void FBXManager::exportFBX(FBX *fbx, string filename) {
@@ -302,8 +303,11 @@ namespace LibGens {
 		}
 		return   -1;
 	}
+
 	void FBX::addHavokAnimationNamed(string name,vector<FbxNode*>& skeleton_bones, hkaSkeleton* skeleton, hkaAnimationBinding* animation_binding, hkaAnimation* animation) {
 		
+		hkaSplineDecompressor * splineAnim= getSplineDecompressor(animation);
+
 		float duration = animation->GetDuration();
 		float frame_duration = 1.0 / 30.0;
 		float current_frame = 0.0;
@@ -311,14 +315,7 @@ namespace LibGens {
 
 		if (frame_duration <= 0.0) return;
 
-		// Create an animation control
-		//hkaDefaultAnimationControl* ac = new hkaDefaultAnimationControl(animation_binding);
-		//ac->setLocalTime(0);
-
-		// Create a new animated skeleton
-		//hkaAnimatedSkeleton* animated_skeleton = new hkaAnimatedSkeleton(skeleton);
-		//animated_skeleton->addAnimationControl( ac );
-		//ac->removeReference();
+	
 
 		FbxAnimStack* lAnimStack = FbxAnimStack::Create(scene, name.c_str());
 		FbxAnimLayer* lAnimLayer = FbxAnimLayer::Create(scene, "");
@@ -340,42 +337,18 @@ namespace LibGens {
 
 			first_frame = false;
 			
-			// Advance the animation			
-			//animation->stepDeltaTime(frame_duration);
-
-			//skeleton->GetFullBone(0)
-			//const iteratorBoneTMs pose=(skeleton->BoneTransforms());
-			//skeleton->sampleAndCombineAnimations(pose.accessUnsyncedPoseLocalSpace().begin(), pose.getFloatSlotValues().begin());
-			//animation_binding->GetTransformTrackToBoneIndex();
-	
 			
 			for (int i = 0; i < skeleton->GetNumBones(); i++) {
 				hkFullBone bone = skeleton->GetFullBone(i);
 				string bone_name = ToString(bone.name);
-
 				for (size_t bone_index = 0; bone_index < skeleton_bones.size(); bone_index++) {
 					if (bone_name == skeleton_bones[bone_index]->GetName()) {
 						const hkQTransform* transform_local = bone.transform;
-						const short parent_index = skeleton->GetBoneParentID(bone.parentID);
-						int track_index=auxGetBoneIndexToTransformTrack(animation_binding, bone_index);
-						
-
-
-						//Vector4 ts_m = transform_model.scale;
-						Vector4 tt = transform_local->position;
-						Vector4 tr = transform_local->rotation;
-						Vector4 ts = transform_local->scale;
-
- 						
-						hkQTransform* hkqanimation;// = const_cast<hkQTransform*>(bone.transform);
-						if(track_index!=-1){
-							hkqanimation = hkqanimation_list[track_index];// new hkQTransform();
+ 						int track_index=auxGetBoneIndexToTransformTrack(animation_binding, bone_index); 						
+						hkQTransform hkqanimation(*transform_local);
+						if(track_index!=-1){							
+							animation->GetTransform(track_index, current_frame, hkqanimation);
 							
-
-							animation->GetTransform(track_index, current_frame, *hkqanimation);
-							tt =  hkqanimation->position;
-							tr = hkqanimation->rotation;
-							ts =  hkqanimation->scale;
 						}
 
 						FbxAnimCurve* curveTX = skeleton_bones[bone_index]->LclTranslation.GetCurve(lAnimLayer, FBXSDK_CURVENODE_COMPONENT_X, true);
@@ -396,7 +369,7 @@ namespace LibGens {
 						if (curveTX) {
 							curveTX->KeyModifyBegin();
 							int lKeyIndex = curveTX->KeyAdd(lTime);
-							curveTX->KeySetValue(lKeyIndex, tt[0]);
+							curveTX->KeySetValue(lKeyIndex, hkqanimation.position.X);
 							curveTX->KeySetInterpolation(lKeyIndex, FbxAnimCurveDef::eInterpolationLinear);
 							curveTX->KeyModifyEnd();
 						}
@@ -404,7 +377,7 @@ namespace LibGens {
 						if (curveTY) {
 							curveTY->KeyModifyBegin();
 							int lKeyIndex = curveTY->KeyAdd(lTime);
-							curveTY->KeySetValue(lKeyIndex, tt[1]);
+							curveTY->KeySetValue(lKeyIndex, hkqanimation.position.Y);
 							curveTY->KeySetInterpolation(lKeyIndex, FbxAnimCurveDef::eInterpolationLinear);
 							curveTY->KeyModifyEnd();
 						}
@@ -412,7 +385,7 @@ namespace LibGens {
 						if (curveTZ) {
 							curveTZ->KeyModifyBegin();
 							int lKeyIndex = curveTZ->KeyAdd(lTime);
-							curveTZ->KeySetValue(lKeyIndex, tt[2]);
+							curveTZ->KeySetValue(lKeyIndex, hkqanimation.position.Z);
 							curveTZ->KeySetInterpolation(lKeyIndex, FbxAnimCurveDef::eInterpolationLinear);
 							curveTZ->KeyModifyEnd();
 						}
@@ -421,7 +394,7 @@ namespace LibGens {
 						if (curveSX) {
 							curveSX->KeyModifyBegin();
 							int lKeyIndex = curveSX->KeyAdd(lTime);
-							curveSX->KeySetValue(lKeyIndex, ts[0]);
+							curveSX->KeySetValue(lKeyIndex, hkqanimation.scale.X);
 							curveSX->KeySetInterpolation(lKeyIndex, FbxAnimCurveDef::eInterpolationLinear);
 							curveSX->KeyModifyEnd();
 						}
@@ -429,7 +402,7 @@ namespace LibGens {
 						if (curveSY) {
 							curveSY->KeyModifyBegin();
 							int lKeyIndex = curveSY->KeyAdd(lTime);
-							curveSY->KeySetValue(lKeyIndex, ts[0]);
+							curveSY->KeySetValue(lKeyIndex, hkqanimation.scale.Y);
 							curveSY->KeySetInterpolation(lKeyIndex, FbxAnimCurveDef::eInterpolationLinear);
 							curveSY->KeyModifyEnd();
 						}
@@ -437,17 +410,17 @@ namespace LibGens {
 						if (curveSZ) {
 							curveSZ->KeyModifyBegin();
 							int lKeyIndex = curveSZ->KeyAdd(lTime);
-							curveSZ->KeySetValue(lKeyIndex, ts[0]);
+							curveSZ->KeySetValue(lKeyIndex, hkqanimation.scale.Z);
 							curveSZ->KeySetInterpolation(lKeyIndex, FbxAnimCurveDef::eInterpolationLinear);
 							curveSZ->KeyModifyEnd();
 						}
 
 
 
-						FbxQuaternion lcl_quat(tr[0], tr[1], tr[2], tr[3]);
-						FbxVector4 lcl_rotation;
+						FbxQuaternion lcl_quat(hkqanimation.rotation.X, hkqanimation.rotation.Y, hkqanimation.rotation.Z, hkqanimation.rotation.W);
+						FbxVector4 lcl_rotation;// = lcl_quat.DecomposeSphericalXYZ();
 						lcl_rotation.SetXYZ(lcl_quat);
-
+						
 						if (curveRX) {
 							curveRX->KeyModifyBegin();
 							int lKeyIndex = curveRX->KeyAdd(lTime);

@@ -7,6 +7,8 @@
 #include "datas/fileinfo.hpp"
 #include "hkInternalInterfaces.h"
 
+
+
 #if _MSC_VER
 #include <tchar.h>
 #else
@@ -58,6 +60,13 @@ static const TCHAR *versions_delta[] =
 #define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h>
 #endif // _MSC_VER
+#include <iostream>
+#include "../source/hkaSplineDecompressor.h"
+#include "../source/hkObjectBase.h"
+#include "../source/hkaSplineCompressedAnimation.h"
+
+using namespace std;
+void TestMine(const string fleName);
 
 int _tmain(const int argc, const TCHAR *argv[])
 {
@@ -73,7 +82,14 @@ int _tmain(const int argc, const TCHAR *argv[])
 	printer.AddPrinterFunction(reinterpret_cast<void*>(printf));
 #endif
 
+#define MY_TEST 1
 
+#ifdef MY_TEST
+	auto testingPath = R"(D:\Escritorio2\Havoc content tool plugin\sn_dash_loop.anm.hkx)";
+
+
+	TestMine(testingPath);
+#else
 	TFileInfo info(argv[0]);
 
 	TSTRING testingPath = info.GetPath() + _T("rc/");
@@ -84,5 +100,68 @@ int _tmain(const int argc, const TCHAR *argv[])
 	TestAllosaurSpline1(testingPath);
 	TestAllosaurSpline2(testingPath);
 	TestAllosaurSpline3(testingPath);
+#endif
 	return 0;
+}
+
+template<class C> struct PublichkaSplineCompressedAnimation_t : hkaSplineCompressedAnimationInternalInterface, hkaSkeletalAnimation_t<typename C::parentClass>
+{
+		typedef C value_type;
+		typedef hkaSkeletalAnimation_t<typename C::parentClass> parent;
+//		hkClassConstructor(SplineCompressedAnimation_t);
+		void SwapEndian() { hkaSkeletalAnimation_t<typename C::parentClass>::SwapEndian(); static_cast<value_type*>(this->Data)->SwapEndian(masterBuffer); }
+		void Process() { decomp.Assign(this); };
+
+	hkaSplineDecompressor decomp;
+};
+
+
+
+hkaSplineDecompressor* getSplineDecompressor(const hkaAnimation* anim) {
+	hkaAnimation* fanim= const_cast<hkaAnimation*>(anim);
+	auto *o=dynamic_cast<hkaSplineCompressedAnimation_t<hkaSplineCompressedAnimation2010_t<hkPointerX86>>*>(fanim);
+	auto * opener=	reinterpret_cast<PublichkaSplineCompressedAnimation_t<hkaSplineCompressedAnimation2010_t<hkPointerX86>>*>(o);
+	return & opener->decomp;
+
+}
+
+
+void TestMine(const string fleName)
+{
+	cout << "testing: " << fleName;
+	IhkPackFile* hdr = IhkPackFile::Create(fleName.c_str());
+
+	if (!hdr)
+	{
+		cout << "testing failed!";
+		return;
+	}
+
+	hkRootLevelContainer* rcont = hdr->GetRootLevelContainer();
+
+	if (!rcont)
+	{
+		cout << "Couldn't find hkRootLevelContainer!";
+		return;
+	}
+
+	const hkaAnimationContainer* aniCont = rcont->GetVariant(0);
+
+	//TestBinding(aniCont);
+
+	const hkaAnimation* anim = aniCont->GetAnimation(0);
+
+	auto x = getSplineDecompressor(anim);
+
+	for (int cAnnot = 0; cAnnot < anim->GetNumAnnotations(); cAnnot++)
+	{
+		cout <<
+			anim->GetAnnotation(cAnnot).get()->GetName() <<
+			cAnnot;
+	}
+
+	// Add some further testing here?
+	//opener->decomp;
+	delete hdr;
+
 }

@@ -384,6 +384,9 @@
       <Filter>Model</Filter>
     </ClInclude>
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="HavokSplineAnimHelper.h">
+      <Filter>Havok</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="BIXF">
